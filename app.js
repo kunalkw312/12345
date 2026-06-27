@@ -3,20 +3,16 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getFirestore, collection, addDoc, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { firebaseConfig } from './config.js';
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
 // ==========================================
-// 1. ROUTING LOGIC
+// 1. UI & ROUTING LOGIC (Loaded first so it never breaks)
 // ==========================================
 window.navigate = function(viewId) {
-    // 1. Hide all views by removing the 'active' class
+    // 1. Hide all views
     document.querySelectorAll('.page-view').forEach(view => {
         view.classList.remove('active');
     });
     
-    // 2. Show target view by adding the 'active' class
+    // 2. Show target view
     const targetView = document.getElementById(viewId);
     if(targetView) {
         targetView.classList.add('active');
@@ -32,63 +28,16 @@ window.navigate = function(viewId) {
         if (sessionStorage.getItem('adminAuth') !== 'true') {
             navigate('admin-login-view');
         } else {
-            loadDashboardData();
+            if (window.loadDashboardData) window.loadDashboardData();
         }
     }
     
-    // 5. Scroll to top automatically
+    // 5. Scroll to top
     window.scrollTo(0, 0);
 };
 
 // ==========================================
-// 2. LEAD CAPTURE (CONTACT FORMS)
-// ==========================================
-async function handleContactSubmit(e) {
-    e.preventDefault();
-    const form = e.target;
-    
-    // Get values based on form structure
-    const name = form.querySelector('input[type="text"]').value;
-    const email = form.querySelector('input[type="email"]').value;
-    const phone = form.querySelector('input[type="tel"]').value;
-    const message = form.querySelector('textarea').value;
-
-    // Change button text to show it's working
-    const btn = form.querySelector('button');
-    const originalText = btn.innerText;
-    btn.innerText = "Sending...";
-
-    try {
-        await addDoc(collection(db, "leads"), {
-            name: name,
-            email: email,
-            phone: phone,
-            message: message,
-            timestamp: serverTimestamp(),
-            status: "New"
-        });
-        alert("Thank you! Your message has been sent successfully.");
-        form.reset();
-    } catch (error) {
-        console.error("Error adding document: ", error);
-        alert("Error sending message. Please try again.");
-    } finally {
-        btn.innerText = originalText;
-    }
-}
-
-// Attach listener to all forms on load
-document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.lead-form').forEach(form => {
-        form.addEventListener('submit', handleContactSubmit);
-    });
-    
-    // Default to the home view, but ensure General FAQ is loaded in the DOM
-    window.showCategory(null, 'General');
-});
-
-// ==========================================
-// 3. ADMIN AUTHENTICATION
+// 2. ADMIN AUTHENTICATION
 // ==========================================
 window.checkLogin = function(e) {
     e.preventDefault();
@@ -98,7 +47,7 @@ window.checkLogin = function(e) {
     // Hardcoded credentials
     if (email === "admin@gmail.com" && password === "1234") {
         sessionStorage.setItem('adminAuth', 'true');
-        document.getElementById("admin-password").value = ''; // clear password field
+        document.getElementById("admin-password").value = ''; // clear password
         navigate('admin-dashboard-view');
     } else {
         alert("Invalid Email or Password ❌");
@@ -111,45 +60,7 @@ window.logout = function() {
 }
 
 // ==========================================
-// 4. DASHBOARD DATA FETCHING
-// ==========================================
-window.loadDashboardData = async function() {
-    const leadsContainer = document.getElementById('leads-table-body');
-    leadsContainer.innerHTML = '<tr><td colspan="5" style="padding: 15px; text-align:center;">Loading leads securely from database...</td></tr>';
-    
-    try {
-        const querySnapshot = await getDocs(collection(db, "leads"));
-        let html = '';
-        let count = 0;
-        
-        querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            const date = data.timestamp ? data.timestamp.toDate().toLocaleDateString() : 'Just now';
-            count++;
-            
-            html += `
-                <tr style="border-bottom: 1px solid #eee; background: #fff;">
-                    <td style="padding: 12px; color: #555;">${data.name}</td>
-                    <td style="padding: 12px; color: #555;">${data.email}</td>
-                    <td style="padding: 12px; color: #555;">${data.phone}</td>
-                    <td style="padding: 12px; color: #555;">${data.message}</td>
-                    <td style="padding: 12px; color: #555;">${date}</td>
-                </tr>
-            `;
-        });
-        
-        leadsContainer.innerHTML = html || '<tr><td colspan="5" style="padding: 15px; text-align:center;">No leads found in database.</td></tr>';
-        document.getElementById('total-leads-count').innerText = count;
-        document.getElementById('new-today-count').innerText = count; 
-        
-    } catch (error) {
-        console.error("Error fetching leads: ", error);
-        leadsContainer.innerHTML = '<tr><td colspan="5" style="padding: 15px; text-align:center; color: red;">Error loading data. Check console.</td></tr>';
-    }
-}
-
-// ==========================================
-// 5. FAQ UI LOGIC
+// 3. FAQ UI LOGIC
 // ==========================================
 window.toggleFaq = function(element) {
     const item = element.parentElement;
@@ -157,7 +68,6 @@ window.toggleFaq = function(element) {
 }
 
 window.showCategory = function(event, category) {
-    // Handle button active states safely
     if (event && event.target) {
         const buttons = document.querySelectorAll('.faq-sidebar button');
         buttons.forEach(btn => btn.classList.remove('active'));
@@ -166,7 +76,6 @@ window.showCategory = function(event, category) {
 
     const container = document.getElementById('faqContainer');
     if (!container) return;
-    
     container.innerHTML = '';
 
     let faqs = [];
@@ -202,3 +111,103 @@ window.showCategory = function(event, category) {
         container.appendChild(item);
     });
 }
+
+// ==========================================
+// 4. FIREBASE INIT & DATABASE LOGIC
+// ==========================================
+let db;
+try {
+    const app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    console.log("Firebase connected.");
+} catch (error) {
+    console.warn("Firebase is not configured yet. Database functions will not work until config.js is updated.", error);
+}
+
+// Handle Form Submissions
+async function handleContactSubmit(e) {
+    e.preventDefault();
+    
+    if (!db) {
+        alert("System is currently in demo mode. Database is not connected.");
+        return;
+    }
+
+    const form = e.target;
+    const name = form.querySelector('input[type="text"]').value;
+    const email = form.querySelector('input[type="email"]').value;
+    const phone = form.querySelector('input[type="tel"]').value;
+    const message = form.querySelector('textarea').value;
+
+    const btn = form.querySelector('button');
+    const originalText = btn.innerText;
+    btn.innerText = "Sending...";
+
+    try {
+        await addDoc(collection(db, "leads"), {
+            name: name,
+            email: email,
+            phone: phone,
+            message: message,
+            timestamp: serverTimestamp(),
+            status: "New"
+        });
+        alert("Thank you! Your message has been sent successfully.");
+        form.reset();
+    } catch (error) {
+        console.error("Error adding document: ", error);
+        alert("Error sending message. Please try again.");
+    } finally {
+        btn.innerText = originalText;
+    }
+}
+
+// Load Dashboard Data
+window.loadDashboardData = async function() {
+    const leadsContainer = document.getElementById('leads-table-body');
+    
+    if (!db) {
+        leadsContainer.innerHTML = '<tr><td colspan="5" style="padding: 15px; text-align:center; color:red;">Database not connected. Please update config.js.</td></tr>';
+        return;
+    }
+
+    leadsContainer.innerHTML = '<tr><td colspan="5" style="padding: 15px; text-align:center;">Loading leads securely from database...</td></tr>';
+    
+    try {
+        const querySnapshot = await getDocs(collection(db, "leads"));
+        let html = '';
+        let count = 0;
+        
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            const date = data.timestamp ? data.timestamp.toDate().toLocaleDateString() : 'Just now';
+            count++;
+            
+            html += `
+                <tr style="border-bottom: 1px solid #eee; background: #fff;">
+                    <td style="padding: 12px; color: #555;">${data.name}</td>
+                    <td style="padding: 12px; color: #555;">${data.email}</td>
+                    <td style="padding: 12px; color: #555;">${data.phone}</td>
+                    <td style="padding: 12px; color: #555;">${data.message}</td>
+                    <td style="padding: 12px; color: #555;">${date}</td>
+                </tr>
+            `;
+        });
+        
+        leadsContainer.innerHTML = html || '<tr><td colspan="5" style="padding: 15px; text-align:center;">No leads found in database.</td></tr>';
+        document.getElementById('total-leads-count').innerText = count;
+        document.getElementById('new-today-count').innerText = count; 
+        
+    } catch (error) {
+        console.error("Error fetching leads: ", error);
+        leadsContainer.innerHTML = '<tr><td colspan="5" style="padding: 15px; text-align:center; color: red;">Error loading data. Check console.</td></tr>';
+    }
+}
+
+// Initialize on Load
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.lead-form').forEach(form => {
+        form.addEventListener('submit', handleContactSubmit);
+    });
+    window.showCategory(null, 'General');
+});
