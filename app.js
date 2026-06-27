@@ -7,22 +7,27 @@ import { firebaseConfig } from './config.js';
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// --- NAVIGATION LOGIC ---
+// ==========================================
+// 1. ROUTING LOGIC
+// ==========================================
 window.navigate = function(viewId) {
-    // Hide all views
+    // 1. Hide all views by removing the 'active' class
     document.querySelectorAll('.page-view').forEach(view => {
-        view.style.display = 'none';
+        view.classList.remove('active');
     });
     
-    // Show target view
-    document.getElementById(viewId).style.display = 'block';
+    // 2. Show target view by adding the 'active' class
+    const targetView = document.getElementById(viewId);
+    if(targetView) {
+        targetView.classList.add('active');
+    }
 
-    // Hide header/footer if it's an admin view
+    // 3. Hide header/footer if it's an admin view
     const isAdminView = viewId === 'admin-login-view' || viewId === 'admin-dashboard-view';
     document.getElementById('main-header').style.display = isAdminView ? 'none' : 'flex';
     document.getElementById('main-footer').style.display = isAdminView ? 'none' : 'block';
     
-    // If navigating to dashboard, check auth and load data
+    // 4. Authentication Check for Dashboard
     if (viewId === 'admin-dashboard-view') {
         if (sessionStorage.getItem('adminAuth') !== 'true') {
             navigate('admin-login-view');
@@ -31,11 +36,13 @@ window.navigate = function(viewId) {
         }
     }
     
-    // Scroll to top
+    // 5. Scroll to top automatically
     window.scrollTo(0, 0);
 };
 
-// --- CONTACT FORM LOGIC (LEAD CAPTURE) ---
+// ==========================================
+// 2. LEAD CAPTURE (CONTACT FORMS)
+// ==========================================
 async function handleContactSubmit(e) {
     e.preventDefault();
     const form = e.target;
@@ -45,6 +52,11 @@ async function handleContactSubmit(e) {
     const email = form.querySelector('input[type="email"]').value;
     const phone = form.querySelector('input[type="tel"]').value;
     const message = form.querySelector('textarea').value;
+
+    // Change button text to show it's working
+    const btn = form.querySelector('button');
+    const originalText = btn.innerText;
+    btn.innerText = "Sending...";
 
     try {
         await addDoc(collection(db, "leads"), {
@@ -60,29 +72,33 @@ async function handleContactSubmit(e) {
     } catch (error) {
         console.error("Error adding document: ", error);
         alert("Error sending message. Please try again.");
+    } finally {
+        btn.innerText = originalText;
     }
 }
 
-// Attach listener to all forms with the class 'lead-form'
+// Attach listener to all forms on load
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.lead-form').forEach(form => {
         form.addEventListener('submit', handleContactSubmit);
     });
     
-    // Default route
-    navigate('home-view');
+    // Default to the home view, but ensure General FAQ is loaded in the DOM
+    window.showCategory(null, 'General');
 });
 
-// --- ADMIN AUTH LOGIC ---
+// ==========================================
+// 3. ADMIN AUTHENTICATION
+// ==========================================
 window.checkLogin = function(e) {
     e.preventDefault();
     const email = document.getElementById("admin-email").value;
     const password = document.getElementById("admin-password").value;
 
-    // Hardcoded credentials as requested
+    // Hardcoded credentials
     if (email === "admin@gmail.com" && password === "1234") {
         sessionStorage.setItem('adminAuth', 'true');
-        alert("Login Successful ✅");
+        document.getElementById("admin-password").value = ''; // clear password field
         navigate('admin-dashboard-view');
     } else {
         alert("Invalid Email or Password ❌");
@@ -94,10 +110,12 @@ window.logout = function() {
     navigate('admin-login-view');
 }
 
-// --- ADMIN DASHBOARD LOGIC (CRM) ---
-async function loadDashboardData() {
+// ==========================================
+// 4. DASHBOARD DATA FETCHING
+// ==========================================
+window.loadDashboardData = async function() {
     const leadsContainer = document.getElementById('leads-table-body');
-    leadsContainer.innerHTML = '<tr><td colspan="5">Loading leads...</td></tr>';
+    leadsContainer.innerHTML = '<tr><td colspan="5" style="padding: 15px; text-align:center;">Loading leads securely from database...</td></tr>';
     
     try {
         const querySnapshot = await getDocs(collection(db, "leads"));
@@ -110,78 +128,75 @@ async function loadDashboardData() {
             count++;
             
             html += `
-                <tr>
-                    <td style="padding: 10px; border-bottom: 1px solid #ddd;">${data.name}</td>
-                    <td style="padding: 10px; border-bottom: 1px solid #ddd;">${data.email}</td>
-                    <td style="padding: 10px; border-bottom: 1px solid #ddd;">${data.phone}</td>
-                    <td style="padding: 10px; border-bottom: 1px solid #ddd;">${data.message}</td>
-                    <td style="padding: 10px; border-bottom: 1px solid #ddd;">${date}</td>
+                <tr style="border-bottom: 1px solid #eee; background: #fff;">
+                    <td style="padding: 12px; color: #555;">${data.name}</td>
+                    <td style="padding: 12px; color: #555;">${data.email}</td>
+                    <td style="padding: 12px; color: #555;">${data.phone}</td>
+                    <td style="padding: 12px; color: #555;">${data.message}</td>
+                    <td style="padding: 12px; color: #555;">${date}</td>
                 </tr>
             `;
         });
         
-        leadsContainer.innerHTML = html || '<tr><td colspan="5">No leads found.</td></tr>';
+        leadsContainer.innerHTML = html || '<tr><td colspan="5" style="padding: 15px; text-align:center;">No leads found in database.</td></tr>';
         document.getElementById('total-leads-count').innerText = count;
-        document.getElementById('new-today-count').innerText = count; // Simplified for this implementation
+        document.getElementById('new-today-count').innerText = count; 
         
     } catch (error) {
         console.error("Error fetching leads: ", error);
-        leadsContainer.innerHTML = '<tr><td colspan="5">Error loading data. Check console.</td></tr>';
+        leadsContainer.innerHTML = '<tr><td colspan="5" style="padding: 15px; text-align:center; color: red;">Error loading data. Check console.</td></tr>';
     }
 }
 
-// Expose internal functions for inline HTML event handlers
+// ==========================================
+// 5. FAQ UI LOGIC
+// ==========================================
 window.toggleFaq = function(element) {
-    // Handling the FAQ page toggles
-    if(element.tagName === 'BUTTON') { // Used in About Page
-        const box = document.getElementById('faqBox');
-        const icon = document.getElementById('toggleIcon');
-        box.classList.toggle('open');
-        icon.textContent = box.classList.contains('open') ? '−' : '+';
-    } else { // Used in FAQ page
-        const item = element.parentElement;
-        item.classList.toggle('open');
-    }
+    const item = element.parentElement;
+    item.classList.toggle('open');
 }
 
-window.showCategory = function(category) {
-    const buttons = document.querySelectorAll('.faq-sidebar button');
-    buttons.forEach(btn=>btn.classList.remove('active'));
-    event.target.classList.add('active');
+window.showCategory = function(event, category) {
+    // Handle button active states safely
+    if (event && event.target) {
+        const buttons = document.querySelectorAll('.faq-sidebar button');
+        buttons.forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+    }
 
     const container = document.getElementById('faqContainer');
+    if (!container) return;
+    
     container.innerHTML = '';
 
     let faqs = [];
-    if(category==='General'){
+    if(category === 'General'){
         faqs = [
             {q:'What is Qfy Leads?',a:'Qfy Leads is a premium lead generation company that provides high‑intent, verified and conversion‑ready leads.'},
-            {q:'How does Qfy Leads work?',a:'We run data‑driven marketing campaigns, verify leads through compliance checks, and deliver them.'},
-            {q:'Which industries do you serve?',a:'We serve Insurance, Healthcare, Financial Services, Real Estate, Home Services, and more.'}
+            {q:'How does Qfy Leads work?',a:'We run data‑driven marketing campaigns, verify leads through compliance checks, and deliver them directly to your team.'},
+            {q:'Which industries do you serve?',a:'We specialize in Insurance, Healthcare, Financial Services, Real Estate, and Home Services.'}
         ];
-    } else if(category==='Leads'){
+    } else if(category === 'Leads'){
         faqs = [
-            {q:'Do you offer replacement for invalid leads?',a:'We provide replacement or credit for invalid leads according to our service agreement.'},
-            {q:'Can I customize targeting filters?',a:'Absolutely. We offer geo‑location, demographic, device, intent‑based and industry‑specific targeting options.'}
+            {q:'Do you offer replacements for invalid leads?',a:'Yes, we provide replacement or credit for invalid leads strictly according to our service agreement.'},
+            {q:'Can I customize targeting filters?',a:'Absolutely. We offer geo‑location, demographic, intent‑based, and industry‑specific targeting options.'}
         ];
-    } else if(category==='Technical'){
+    } else if(category === 'Technical'){
         faqs = [
-            {q:'Do you offer CRM integration?',a:'Yes. We support CRM integrations and API‑based delivery for seamless automation.'},
-            {q:'How are leads delivered?',a:'Leads can be delivered via API, CRM integration, email, or secure dashboard access.'},
-            {q:'Is my data secure?',a:'Yes. We follow strict data security protocols and compliance standards.'}
+            {q:'Do you offer CRM integration?',a:'Yes. We support direct CRM integrations and API‑based delivery for seamless automation.'},
+            {q:'Is my data secure?',a:'Yes. We follow strict data security protocols and compliance standards to ensure all data remains protected.'}
         ];
-    } else if(category==='Pricing'){
+    } else if(category === 'Pricing'){
         faqs = [
-            {q:'How is pricing structured?',a:'Pricing depends on industry, targeting filters, volume, and delivery type.'},
-            {q:'Is there a minimum order requirement?',a:'Minimum order volume varies by industry. Our team will guide you based on your campaign goals.'}
+            {q:'How is pricing structured?',a:'Pricing depends on your industry, targeting filters, required volume, and delivery type. Reach out for a custom quote.'}
         ];
     }
 
-    faqs.forEach(faq=>{
+    faqs.forEach(faq => {
         const item = document.createElement('div');
         item.className = 'faq-item';
         item.innerHTML = `
-            <div class="faq-question" onclick="toggleFaq(this)">${faq.q}</div>
+            <div class="faq-question" onclick="toggleFaq(this)">${faq.q} <span style="font-size:12px; color:#1c4d8d;">▼</span></div>
             <div class="faq-answer">${faq.a}</div>
         `;
         container.appendChild(item);
