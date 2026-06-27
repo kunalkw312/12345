@@ -1,71 +1,49 @@
 // app.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { firebaseConfig } from './config.js';
 
 // ==========================================
-// 1. UI & ROUTING LOGIC (Loaded first so it never breaks)
+// 1. GLOBAL UI & ROUTING LOGIC
+// (Registered immediately so buttons always work)
 // ==========================================
+
 window.navigate = function(viewId) {
-    // 1. Hide all views
+    // Hide all views
     document.querySelectorAll('.page-view').forEach(view => {
         view.classList.remove('active');
     });
     
-    // 2. Show target view
+    // Show target view
     const targetView = document.getElementById(viewId);
     if(targetView) {
         targetView.classList.add('active');
     }
 
-    // 3. Hide header/footer if it's an admin view
+    // Hide header/footer if it's an admin view
     const isAdminView = viewId === 'admin-login-view' || viewId === 'admin-dashboard-view';
-    document.getElementById('main-header').style.display = isAdminView ? 'none' : 'flex';
-    document.getElementById('main-footer').style.display = isAdminView ? 'none' : 'block';
+    const mainHeader = document.getElementById('main-header');
+    const mainFooter = document.getElementById('main-footer');
     
-    // 4. Authentication Check for Dashboard
+    if (mainHeader) mainHeader.style.display = isAdminView ? 'none' : 'flex';
+    if (mainFooter) mainFooter.style.display = isAdminView ? 'none' : 'block';
+    
+    // Authentication Check for Dashboard
     if (viewId === 'admin-dashboard-view') {
         if (sessionStorage.getItem('adminAuth') !== 'true') {
-            navigate('admin-login-view');
+            window.navigate('admin-login-view');
         } else {
-            if (window.loadDashboardData) window.loadDashboardData();
+            window.loadDashboardData();
         }
     }
     
-    // 5. Scroll to top
+    // Scroll to top
     window.scrollTo(0, 0);
 };
 
-// ==========================================
-// 2. ADMIN AUTHENTICATION
-// ==========================================
-window.checkLogin = function(e) {
-    e.preventDefault();
-    const email = document.getElementById("admin-email").value;
-    const password = document.getElementById("admin-password").value;
-
-    // Hardcoded credentials
-    if (email === "admin@gmail.com" && password === "1234") {
-        sessionStorage.setItem('adminAuth', 'true');
-        document.getElementById("admin-password").value = ''; // clear password
-        navigate('admin-dashboard-view');
-    } else {
-        alert("Invalid Email or Password ❌");
-    }
-}
-
-window.logout = function() {
-    sessionStorage.removeItem('adminAuth');
-    navigate('admin-login-view');
-}
-
-// ==========================================
-// 3. FAQ UI LOGIC
-// ==========================================
 window.toggleFaq = function(element) {
     const item = element.parentElement;
     item.classList.toggle('open');
-}
+};
 
 window.showCategory = function(event, category) {
     if (event && event.target) {
@@ -76,6 +54,7 @@ window.showCategory = function(event, category) {
 
     const container = document.getElementById('faqContainer');
     if (!container) return;
+    
     container.innerHTML = '';
 
     let faqs = [];
@@ -105,31 +84,68 @@ window.showCategory = function(event, category) {
         const item = document.createElement('div');
         item.className = 'faq-item';
         item.innerHTML = `
-            <div class="faq-question" onclick="toggleFaq(this)">${faq.q} <span style="font-size:12px; color:#1c4d8d;">▼</span></div>
+            <div class="faq-question" onclick="window.toggleFaq(this)">${faq.q} <span style="font-size:12px; color:#1c4d8d;">▼</span></div>
             <div class="faq-answer">${faq.a}</div>
         `;
         container.appendChild(item);
     });
-}
+};
+
+window.checkLogin = function(e) {
+    e.preventDefault();
+    const email = document.getElementById("admin-email").value;
+    const password = document.getElementById("admin-password").value;
+
+    // Hardcoded credentials
+    if (email === "admin@gmail.com" && password === "1234") {
+        sessionStorage.setItem('adminAuth', 'true');
+        document.getElementById("admin-password").value = ''; // clear password field
+        window.navigate('admin-dashboard-view');
+    } else {
+        alert("Invalid Email or Password ❌");
+    }
+};
+
+window.logout = function() {
+    sessionStorage.removeItem('adminAuth');
+    window.navigate('admin-login-view');
+};
+
+// Default load logic
+document.addEventListener('DOMContentLoaded', () => {
+    window.showCategory(null, 'General'); // Load initial FAQs
+});
+
 
 // ==========================================
-// 4. FIREBASE INIT & DATABASE LOGIC
+// 2. FIREBASE CONFIGURATION & LOGIC
+// (Wrapped safely so it won't crash the UI if keys are missing)
 // ==========================================
-let db;
+
+const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId: "YOUR_APP_ID"
+};
+
+let db = null;
+
 try {
     const app = initializeApp(firebaseConfig);
     db = getFirestore(app);
-    console.log("Firebase connected.");
 } catch (error) {
-    console.warn("Firebase is not configured yet. Database functions will not work until config.js is updated.", error);
+    console.warn("Firebase could not initialize. Make sure you updated your config keys in app.js.", error);
 }
 
-// Handle Form Submissions
+// Function to handle form submissions
 async function handleContactSubmit(e) {
     e.preventDefault();
     
     if (!db) {
-        alert("System is currently in demo mode. Database is not connected.");
+        alert("Database is not connected. Please update your Firebase Config keys in app.js.");
         return;
     }
 
@@ -162,17 +178,23 @@ async function handleContactSubmit(e) {
     }
 }
 
-// Load Dashboard Data
+// Attach listener to all contact forms
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.lead-form').forEach(form => {
+        form.addEventListener('submit', handleContactSubmit);
+    });
+});
+
+// Function to fetch data for the Admin CRM
 window.loadDashboardData = async function() {
     const leadsContainer = document.getElementById('leads-table-body');
+    leadsContainer.innerHTML = '<tr><td colspan="5" style="padding: 15px; text-align:center;">Loading leads securely from database...</td></tr>';
     
     if (!db) {
-        leadsContainer.innerHTML = '<tr><td colspan="5" style="padding: 15px; text-align:center; color:red;">Database not connected. Please update config.js.</td></tr>';
+        leadsContainer.innerHTML = '<tr><td colspan="5" style="padding: 15px; text-align:center; color: red;">Database not connected. Check Firebase Config.</td></tr>';
         return;
     }
 
-    leadsContainer.innerHTML = '<tr><td colspan="5" style="padding: 15px; text-align:center;">Loading leads securely from database...</td></tr>';
-    
     try {
         const querySnapshot = await getDocs(collection(db, "leads"));
         let html = '';
@@ -202,12 +224,4 @@ window.loadDashboardData = async function() {
         console.error("Error fetching leads: ", error);
         leadsContainer.innerHTML = '<tr><td colspan="5" style="padding: 15px; text-align:center; color: red;">Error loading data. Check console.</td></tr>';
     }
-}
-
-// Initialize on Load
-document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.lead-form').forEach(form => {
-        form.addEventListener('submit', handleContactSubmit);
-    });
-    window.showCategory(null, 'General');
-});
+};
