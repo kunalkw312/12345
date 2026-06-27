@@ -13,10 +13,16 @@
         html { scroll-behavior: smooth; }
         body { background: #0f2f63; overflow-x: hidden; color: #333; }
         
-        /* Global SPA Class */
-        .page-view { display: none; }
+        /* --- SPA ROUTING CLASSES --- */
+        .page-view { display: none; width: 100%; }
+        /* Standard pages use block */
+        .page-view.active { display: block; }
+        /* Flexbox pages need display: flex when active */
+        #contact-view.active { display: flex; }
+        #admin-login-view.active { display: flex; }
+        #admin-dashboard-view.active { display: flex; }
         
-        /* Header */
+        /* --- HEADER --- */
         header { position: fixed; top: 0; left: 0; width: 100%; padding: 20px 8%; display: flex; justify-content: space-between; align-items: center; background: #29579b; z-index: 1000; }
         .logo { font-size: 38px; font-weight: 800; color: #fff; cursor: pointer; }
         .logo span { color: #c8eaf9; }
@@ -25,8 +31,8 @@
         nav a:hover { color: #d3efff; }
         .contact-btn { background: #d7edf8; padding: 12px 28px; border-radius: 10px; text-decoration: none; color: #123e6b; font-weight: 600; cursor: pointer; }
 
-        /* Shared / Home Styles */
-        .hero { position: relative; min-height: 100vh; padding-top: 120px; display: flex; align-items: center; background: linear-gradient(rgba(8, 36, 90, .80), rgba(23, 70, 133, .70)), url("assets/Home.jpg"); background-size: cover; background-position: center; }
+        /* --- HOME --- */
+        .hero { position: relative; min-height: 100vh; padding-top: 120px; display: flex; align-items: center; background: linear-gradient(rgba(8, 36, 90, .80), rgba(23, 70, 133, .70)), url("assets/Home.jpg") center/cover; }
         .container { width: 85%; margin: auto; display: flex; justify-content: space-between; align-items: center; gap: 60px; }
         .left { width: 58%; }
         .left h1 { font-size: 40px; line-height: 80px; font-weight: 750; color: white; margin-bottom: 25px; text-transform: uppercase; }
@@ -38,12 +44,13 @@
         .call { display: flex; align-items: center; gap: 18px; margin-bottom: 35px; }
         .call-icon { width: 70px; height: 70px; background: #2f5f9f; border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; font-size: 28px; }
         .call h3 { color: white; font-size: 23px; }
-        .main-btn { display: inline-block; padding: 18px 45px; background: #d4edf8; border-radius: 50px; text-decoration: none; font-size: 12px; font-weight: 600; color: #133d68; transition: .4s; cursor: pointer;}
+        .main-btn { display: inline-block; padding: 18px 45px; background: #d4edf8; border-radius: 50px; text-decoration: none; font-size: 14px; font-weight: 600; color: #133d68; transition: .4s; cursor: pointer;}
         .main-btn:hover { transform: translateY(-5px); }
         .right { width: 42%; display: flex; justify-content: center; }
         .image-card { background: rgba(255, 255, 255, .18); padding: 22px; border-radius: 25px; backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, .2); box-shadow: 0 20px 60px rgba(0, 0, 0, .35); }
         .image-card img { width: 100%; display: block; border-radius: 20px; }
         
+        /* --- REUSABLE CARDS & SECTIONS --- */
         section.industries { background: #f9fbff; color: #1a1a1a; padding: 80px 8%; text-align: center; }
         section.industries h1 { font-size: 42px; font-weight: 700; color: #0f2f63; margin-bottom: 15px; }
         section.industries p.desc { font-size: 18px; color: #555; margin-bottom: 60px; }
@@ -51,8 +58,8 @@
         .card { background: #fff; border-radius: 12px; box-shadow: 0 6px 18px rgba(0, 0, 0, .08); padding: 40px 25px; transition: .3s; }
         .card:hover { transform: translateY(-6px); box-shadow: 0 10px 25px rgba(0, 0, 0, .12); }
         .card h3 { font-size: 20px; color: #0f2f63; margin-bottom: 10px; font-weight: 600; }
-        
-        /* Contact Form Styles (Used in multiple places) */
+
+        /* --- CONTACT FORMS (Home & Contact Page) --- */
         .leadformx-section { background: linear-gradient(to right, rgba(15,47,99,0.95), rgba(15,47,99,0.85)), url("assets/office-bg.jpg") center/cover; color: #fff; padding: 100px 8%; }
         .leadformx-container { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 60px; }
         .leadformx-left { flex: 1 1 50%; }
@@ -62,29 +69,48 @@
         .leadformx-form-card input, .leadformx-form-card textarea { width: 100%; padding: 14px 16px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; outline: none; }
         .leadformx-form-card button { width: 100%; background: #2f5f9f; color: #fff; font-weight: 600; padding: 14px 0; border: none; border-radius: 8px; cursor: pointer; transition: 0.3s; }
         
-        /* Dedicated Contact Page Form */
-        .contact-page-wrapper { background: url('assets/contact.jpg') center/cover; height: 100vh; display: flex; justify-content: center; align-items: center; padding-top: 80px;}
+        .contact-page-wrapper { background: url('assets/contact.jpg') center/cover; min-height: 100vh; width: 100%; justify-content: center; align-items: center; padding-top: 80px;}
         .contact-form-box { background: #fff; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.25); width: 400px; padding: 40px 35px; text-align: center; }
-        
-        /* Admin Login & Dashboard */
-        .admin-wrapper { background-color: #f5f6fa; height: 100vh; display: flex; justify-content: center; align-items: center; width: 100%;}
+
+        /* --- ABOUT PAGE --- */
+        .about-hero { background: linear-gradient(to right, #0f2854, #4988c4); text-align: center; padding: 120px 20px 80px; color: #eaf3ff;}
+        .about-hero h1 { font-size: 40px; font-weight: 700; margin-bottom: 20px; color: #fff; }
+        .about-content { background: #fff; color: #333; padding: 80px 8%; text-align: center; }
+        .about-content h2 { font-size: 28px; font-weight: 700; margin-bottom: 15px; color: #0F2854; }
+
+        /* --- FAQ PAGE --- */
+        .faq-layout { display: flex; gap: 40px; width: 85%; margin: auto; padding-bottom: 80px; flex-wrap: wrap; }
+        .faq-sidebar { background: #fff; border-radius: 14px; box-shadow: 0 6px 18px rgba(0,0,0,0.08); padding: 25px; width: 280px; align-self: flex-start; }
+        .faq-sidebar button { display: block; width: 100%; text-align: left; padding: 12px 14px; border: none; border-radius: 8px; background: none; font-size: 15px; color: #0F2854; cursor: pointer; transition: 0.3s; margin-bottom: 5px; }
+        .faq-sidebar button.active { background: #1C4D8D; color: #fff; }
+        .faq-sidebar button:hover:not(.active) { background: #E6F2FF; }
+        .faq-item { background: #fff; border-radius: 14px; box-shadow: 0 6px 18px rgba(0,0,0,0.08); margin-bottom: 20px; overflow: hidden; }
+        .faq-question { padding: 18px 22px; font-weight: 600; color: #1C4D8D; cursor: pointer; display: flex; justify-content: space-between; }
+        .faq-answer { padding: 0 22px 18px; color: #555; font-size: 14px; line-height: 1.6; display: none; }
+        .faq-item.open .faq-answer { display: block; }
+
+        /* --- ADMIN PORTAL --- */
+        .admin-wrapper { background-color: #f5f6fa; min-height: 100vh; width: 100%; justify-content: center; align-items: center; }
         .login-card { background: #fff; width: 380px; padding: 40px; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
-        .login-card input { width: 100%; padding: 12px; margin-bottom: 18px; border: 1px solid #dcdcdc; border-radius: 8px; background-color: #eef3ff; }
-        .login-card button { width: 100%; padding: 12px; background-color: #2f80ed; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+        .login-card input { width: 100%; padding: 12px; margin-bottom: 18px; border: 1px solid #dcdcdc; border-radius: 8px; background-color: #eef3ff; outline: none; }
+        .login-card button { width: 100%; padding: 12px; background-color: #2f80ed; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
         
-        .dashboard-wrapper { display: flex; background-color: #f5f6fa; min-height: 100vh; width: 100%; }
-        .sidebar { width: 220px; background-color: #0b132b; color: #fff; height: 100vh; padding-top: 20px; position: fixed; }
-        .sidebar a { display: block; color: #fff; text-decoration: none; padding: 12px 20px; margin: 5px 10px; border-radius: 6px; cursor: pointer;}
+        .dashboard-wrapper { background-color: #f5f6fa; min-height: 100vh; width: 100%; display: flex; }
+        .sidebar { width: 220px; background-color: #0b132b; color: #fff; min-height: 100vh; padding-top: 20px; }
+        .sidebar a { display: block; color: #fff; text-decoration: none; padding: 12px 20px; margin: 5px 10px; border-radius: 6px; cursor: pointer; }
         .sidebar a:hover { background-color: #1c60c3; }
-        .main-panel { margin-left: 220px; padding: 30px; width: calc(100% - 220px); }
+        .main-panel { flex-grow: 1; padding: 30px; }
         .cards { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 30px;}
         .dash-card { background-color: #fff; border-radius: 10px; padding: 20px; width: 220px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        
-        /* Footer */
-        .footx-wrapper { background: #0f2854; color: #fff; padding: 80px 8% 40px; }
+
+        /* --- FOOTER --- */
+        .footx-wrapper { background: #0f2854; color: #fff; padding: 80px 8% 20px; }
         .footx-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 40px; margin-bottom: 40px; }
         .footx-column ul { list-style: none; }
-        .footx-column a { color: #cdd9e8; text-decoration: none; }
+        .footx-column li { margin-bottom: 10px; }
+        .footx-column a { color: #cdd9e8; text-decoration: none; cursor: pointer; transition: 0.3s; }
+        .footx-column a:hover { color: #fff; }
+        .footx-bottom { border-top: 1px solid rgba(255, 255, 255, 0.15); text-align: center; padding-top: 20px; display: flex; justify-content: space-between; font-size: 13px; color: #cdd9e8;}
     </style>
 </head>
 
@@ -97,12 +123,11 @@
       <a onclick="navigate('service-view')">Services</a>
       <a onclick="navigate('about-view')">About</a>
       <a onclick="navigate('faq-view')">FAQ</a>
-      <a onclick="navigate('admin-login-view')">Admin</a>
     </nav>
     <a onclick="navigate('contact-view')" class="contact-btn">Contact</a>
   </header>
 
-  <div id="home-view" class="page-view">
+  <div id="home-view" class="page-view active">
     <section class="hero">
         <div class="container">
             <div class="left">
@@ -115,28 +140,33 @@
                 <a onclick="navigate('contact-view')" class="main-btn">Contact Us →</a>
             </div>
             <div class="right">
-                <div class="image-card"><img src="assets/Home.jpg" alt="Lead Image" style="background:#fff; height:300px; width:100%"></div>
+                <div class="image-card">
+                    <img src="assets/Home.jpg" alt="Lead Image" style="background:#fff; height:300px; width:100%; object-fit: cover;">
+                </div>
             </div>
         </div>
     </section>
 
     <section class="industries">
       <h1>Industries We Serve</h1>
+      <p class="desc">Performance‑driven lead solutions tailored for industries that demand accuracy, compliance, and scalability.</p>
       <div class="grid">
-        <div class="card"><h3>Insurance</h3><p>High‑intent prospects customized.</p></div>
-        <div class="card"><h3>Healthcare</h3><p>High‑intent prospects customized.</p></div>
-        <div class="card"><h3>Financial Services</h3><p>High‑intent prospects customized.</p></div>
+        <div class="card"><h3>Insurance</h3><p>High‑intent prospects customized for your business growth.</p></div>
+        <div class="card"><h3>Healthcare</h3><p>High‑intent prospects customized for your business growth.</p></div>
+        <div class="card"><h3>Financial Services</h3><p>High‑intent prospects customized for your business growth.</p></div>
       </div>
     </section>
 
     <section class="leadformx-section">
       <div class="leadformx-container">
         <div class="leadformx-left">
+          <p style="color: #b9e9ff; letter-spacing: 2px; margin-bottom: 10px; font-size: 14px;">EXCLUSIVE BUSINESS LEADS</p>
           <h1>Unlock High‑Converting<br><span>Verified Leads</span></h1>
+          <p style="color: #d7edf8; font-size: 17px; line-height: 28px;">Our verified, conversion‑ready leads help businesses scale faster, increase revenue, and dominate their industry.</p>
         </div>
         <div class="leadformx-right">
           <div class="leadformx-form-card">
-            <h2>Get Started</h2>
+            <h2 style="text-align: center; margin-bottom: 20px;">Get Started</h2>
             <form class="lead-form">
               <input type="text" placeholder="Full Name" required>
               <input type="email" placeholder="Email Address" required>
@@ -150,54 +180,61 @@
     </section>
   </div>
 
-  <div id="service-view" class="page-view" style="padding-top: 100px; background:#eaf3ff; min-height: 100vh;">
-    <section class="industries">
+  <div id="service-view" class="page-view" style="background:#eaf3ff; min-height: 100vh;">
+    <section class="industries" style="padding-top: 140px; background: transparent;">
       <h1>Our Professional Services</h1>
       <p class="desc">Comprehensive data‑driven marketing solutions designed to scale your business.</p>
       <div class="grid">
-        <div class="card" style="border-top: 4px solid #1C4D8D;">
+        <div class="card" style="border-top: 4px solid #1C4D8D; text-align: left;">
           <h3>Precision Lead Generation</h3>
-          <p>We deliver high‑intent, verified leads tailored to your industry.</p>
+          <p style="font-size: 14px; margin-bottom: 10px;">We deliver high‑intent, verified leads tailored to your industry.</p>
         </div>
-        <div class="card" style="border-top: 4px solid #1C4D8D;">
+        <div class="card" style="border-top: 4px solid #1C4D8D; text-align: left;">
           <h3>Data as a Service (DaaS)</h3>
-          <p>Scalable real‑time and aged data solutions.</p>
+          <p style="font-size: 14px; margin-bottom: 10px;">Scalable real‑time and aged data solutions designed to power growth.</p>
         </div>
-        <div class="card" style="border-top: 4px solid #1C4D8D;">
+        <div class="card" style="border-top: 4px solid #1C4D8D; text-align: left;">
           <h3>Targeted Paid Advertising</h3>
-          <p>Strategic paid advertising campaigns across Google, Meta.</p>
+          <p style="font-size: 14px; margin-bottom: 10px;">Strategic paid advertising campaigns across Google, Meta.</p>
         </div>
       </div>
     </section>
   </div>
 
-  <div id="about-view" class="page-view" style="padding-top: 100px; background: #fff; min-height: 100vh;">
-    <div style="background: linear-gradient(to right, #0f2854, #4988c4); padding: 80px 20px; text-align: center; color: white;">
+  <div id="about-view" class="page-view" style="background: #fff; min-height: 100vh;">
+    <div class="about-hero">
         <h1>About Qfy Leads</h1>
-        <p>We help businesses grow faster by delivering accurate, real-time, high-intent leads that convert into revenue.</p>
+        <p style="max-width: 700px; margin: auto; font-size: 18px;">We help businesses grow faster by delivering accurate, real-time, high-intent leads that convert into revenue.</p>
     </div>
-    <div style="padding: 60px 8%; text-align: center;">
-        <h2 style="color: #0F2854; margin-bottom: 20px;">Who We Are</h2>
-        <p style="max-width: 800px; margin: auto;">Qfy Leads is a results-driven lead generation and IT solutions company focused on helping startups, agencies, and enterprises scale their sales pipeline with confidence.</p>
+    <div class="about-content">
+        <h2>Who We Are</h2>
+        <p style="max-width: 800px; margin: 0 auto 40px; line-height: 1.6;">Qfy Leads is a results-driven lead generation and IT solutions company focused on helping startups, agencies, and enterprises scale their sales pipeline with confidence.</p>
+        <h2>Our Vision</h2>
+        <p style="max-width: 800px; margin: 0 auto; line-height: 1.6;">To become India’s most trusted and performance-driven lead generation partner by combining technology, transparency, and long-term value.</p>
     </div>
   </div>
 
-  <div id="faq-view" class="page-view" style="padding-top: 120px; background: #F4F9FF; min-height: 100vh;">
-     <div style="text-align: center; margin-bottom: 40px;">
-      <h2 style="font-size: 36px; color:#0f2854;">Frequently Asked Questions</h2>
-    </div>
-    <div style="display: flex; gap: 40px; width: 85%; margin: auto;">
-        <div class="faq-sidebar" style="background:#fff; padding: 20px; border-radius: 10px; width: 250px;">
-            <button onclick="showCategory('General')" style="width: 100%; padding: 10px; border:none; background: #1C4D8D; color: #fff; margin-bottom:10px; border-radius:5px;">General</button>
-            <button onclick="showCategory('Leads')" style="width: 100%; padding: 10px; border:none; background: #eaf3ff; margin-bottom:10px; border-radius:5px;">Leads</button>
+  <div id="faq-view" class="page-view" style="background: #F4F9FF; min-height: 100vh;">
+    <section style="padding: 140px 8% 80px;">
+        <div style="text-align: center; margin-bottom: 60px;">
+            <h2 style="font-size: 36px; color:#0f2854;">Frequently Asked Questions</h2>
+            <p style="color: #555;">Everything you need to know about Qfy Leads services.</p>
         </div>
-        <div id="faqContainer" style="flex:1;">
-            <div class="leadformx-form-card" style="max-width: 100%;">
-                <h3 style="margin-bottom:10px; color:#1C4D8D">What is Qfy Leads?</h3>
-                <p>Qfy Leads is a premium lead generation company that provides high‑intent, verified and conversion‑ready leads.</p>
+        <div class="faq-layout">
+            <div class="faq-sidebar">
+                <h3 style="font-size: 16px; color: #1C4D8D; margin-bottom: 20px;">Categories</h3>
+                <button class="active" onclick="showCategory(event, 'General')">General</button>
+                <button onclick="showCategory(event, 'Leads')">Leads</button>
+                <button onclick="showCategory(event, 'Technical')">Technical</button>
+                <button onclick="showCategory(event, 'Pricing')">Pricing</button>
+            </div>
+            
+            <div style="flex:1;">
+                <div id="faqContainer">
+                    </div>
             </div>
         </div>
-    </div>
+    </section>
   </div>
 
   <div id="contact-view" class="page-view">
@@ -205,11 +242,11 @@
         <div class="contact-form-box">
             <h2 style="color: #0f2854; margin-bottom: 20px;">Contact Us</h2>
             <form class="lead-form">
-              <input type="text" placeholder="Full Name" required style="width:100%; padding: 12px; margin-bottom:10px; border-radius:5px; border:1px solid #ddd;">
-              <input type="email" placeholder="Email Address" required style="width:100%; padding: 12px; margin-bottom:10px; border-radius:5px; border:1px solid #ddd;">
-              <input type="tel" placeholder="Phone Number" required style="width:100%; padding: 12px; margin-bottom:10px; border-radius:5px; border:1px solid #ddd;">
-              <textarea placeholder="Your Message" required style="width:100%; padding: 12px; margin-bottom:10px; border-radius:5px; border:1px solid #ddd; height:100px;"></textarea>
-              <button type="submit" style="width:100%; background:#1c4d8d; color:white; padding: 12px; border:none; border-radius:5px; cursor:pointer;">Send Message</button>
+              <input type="text" placeholder="Full Name" required style="width:100%; padding: 14px 16px; margin-bottom:15px; border-radius:8px; border:1px solid #ddd; outline:none; font-family:'Poppins';">
+              <input type="email" placeholder="Email Address" required style="width:100%; padding: 14px 16px; margin-bottom:15px; border-radius:8px; border:1px solid #ddd; outline:none; font-family:'Poppins';">
+              <input type="tel" placeholder="Phone Number" required style="width:100%; padding: 14px 16px; margin-bottom:15px; border-radius:8px; border:1px solid #ddd; outline:none; font-family:'Poppins';">
+              <textarea placeholder="Your Message" required style="width:100%; padding: 14px 16px; margin-bottom:15px; border-radius:8px; border:1px solid #ddd; outline:none; font-family:'Poppins'; height:100px; resize:none;"></textarea>
+              <button type="submit" style="width:100%; background:#1c4d8d; color:white; padding: 14px 0; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size:16px;">Send Message</button>
             </form>
         </div>
     </div>
@@ -218,12 +255,12 @@
   <div id="admin-login-view" class="page-view">
       <div class="admin-wrapper">
           <div class="login-card">
-            <h2 style="text-align: center; margin-bottom: 10px;">Admin Login</h2>
+            <h2 style="text-align: center; margin-bottom: 10px; color:#000;">Admin Login</h2>
             <p style="text-align: center; margin-bottom: 20px; color: #555;">Login to CRM Dashboard</p>
             <form onsubmit="checkLogin(event)">
-              <label>Email</label>
+              <label style="display:block; font-weight:600; margin-bottom:6px;">Email</label>
               <input type="email" id="admin-email" placeholder="admin@gmail.com" required>
-              <label>Password</label>
+              <label style="display:block; font-weight:600; margin-bottom:6px;">Password</label>
               <input type="password" id="admin-password" placeholder="••••••••" required>
               <button type="submit">Login</button>
             </form>
@@ -236,39 +273,42 @@
           <div class="sidebar">
             <h2 style="text-align: center; margin-bottom: 30px;">CRM Panel</h2>
             <a onclick="loadDashboardData()" style="background-color: #1c60c3;">Leads Dashboard</a>
-            <a onclick="logout()" style="margin-top: 50px; color: #ff6b6b;">Logout</a>
+            <a onclick="logout()" style="margin-top: 50px; color: #ff6b6b; background: rgba(255,0,0,0.1);">Logout</a>
           </div>
           <div class="main-panel">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
-                <h1 style="color:#333;">Admin Dashboard</h1>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                <h1 style="color:#333; font-size:24px;">Admin Dashboard</h1>
             </div>
+            
             <div class="cards">
               <div class="dash-card">
-                <h3 style="color:#555; margin-bottom:10px;">Total Leads</h3>
+                <h3 style="color:#555; margin-bottom:10px; font-size:15px;">Total Leads</h3>
                 <p id="total-leads-count" style="font-size:24px; font-weight:bold; color:#2f80ed;">0</p>
               </div>
               <div class="dash-card">
-                <h3 style="color:#555; margin-bottom:10px;">New Today</h3>
+                <h3 style="color:#555; margin-bottom:10px; font-size:15px;">New Today</h3>
                 <p id="new-today-count" style="font-size:24px; font-weight:bold; color:#27ae60;">0</p>
               </div>
             </div>
             
             <div style="background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-                <h2 style="color:#333; margin-bottom: 20px;">Recent Submissions</h2>
-                <table style="width: 100%; text-align: left; border-collapse: collapse;">
-                    <thead>
-                        <tr style="background: #f5f6fa;">
-                            <th style="padding: 10px;">Name</th>
-                            <th style="padding: 10px;">Email</th>
-                            <th style="padding: 10px;">Phone</th>
-                            <th style="padding: 10px;">Message</th>
-                            <th style="padding: 10px;">Date</th>
-                        </tr>
-                    </thead>
-                    <tbody id="leads-table-body">
-                        <tr><td colspan="5">Loading leads...</td></tr>
-                    </tbody>
-                </table>
+                <h2 style="color:#333; font-size:18px; margin-bottom: 20px;">Recent Submissions</h2>
+                <div style="overflow-x:auto;">
+                    <table style="width: 100%; text-align: left; border-collapse: collapse; min-width: 600px;">
+                        <thead>
+                            <tr style="background: #f5f6fa; border-bottom: 2px solid #ddd;">
+                                <th style="padding: 12px; color:#333;">Name</th>
+                                <th style="padding: 12px; color:#333;">Email</th>
+                                <th style="padding: 12px; color:#333;">Phone</th>
+                                <th style="padding: 12px; color:#333;">Message</th>
+                                <th style="padding: 12px; color:#333;">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leads-table-body">
+                            <tr><td colspan="5" style="padding: 15px; text-align:center;">Loading leads...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
           </div>
       </div>
@@ -277,17 +317,29 @@
   <footer id="main-footer" class="footx-wrapper">
     <div class="footx-container">
       <div class="footx-column">
-        <h3>QFY Leads</h3>
-        <p>Premium quality leads that drive real business results. TCPA compliant, verified, and ready to convert.</p>
+        <h3 style="font-size:18px; margin-bottom:20px;">QFY Leads</h3>
+        <p style="color:#cdd9e8; font-size:14px; line-height:22px;">Premium quality leads that drive real business results. TCPA compliant, verified, and ready to convert.</p>
       </div>
       <div class="footx-column">
-        <h3>Quick Links</h3>
+        <h3 style="font-size:18px; margin-bottom:20px;">Quick Links</h3>
         <ul>
           <li><a onclick="navigate('home-view')">Home</a></li>
           <li><a onclick="navigate('service-view')">Services</a></li>
           <li><a onclick="navigate('contact-view')">Contact</a></li>
         </ul>
       </div>
+      <div class="footx-column">
+        <h3 style="font-size:18px; margin-bottom:20px;">Contact Us</h3>
+        <ul style="color:#cdd9e8; font-size:14px; line-height:22px;">
+            <li style="margin-bottom:10px;"><i class="fa-solid fa-phone" style="color:#b9e9ff; margin-right:8px;"></i> <a href="tel:+918878787420">+91 8878787420</a></li>
+            <li><i class="fa-solid fa-envelope" style="color:#b9e9ff; margin-right:8px;"></i> <a href="mailto:rohit@qfyleads.com">rohit@qfyleads.com</a></li>
+        </ul>
+      </div>
+    </div>
+    
+    <div class="footx-bottom">
+        <p>© 2026 QFY Leads. All rights reserved.</p>
+        <a onclick="navigate('admin-login-view')" style="color: rgba(255,255,255,0.4); text-decoration: none; cursor: pointer; transition: 0.3s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.4)'"><i class="fa-solid fa-lock"></i> Admin Portal</a>
     </div>
   </footer>
 
