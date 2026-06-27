@@ -16,9 +16,7 @@
         /* --- SPA ROUTING CLASSES --- */
         .page-view { display: none; width: 100%; }
         .page-view.active { display: block; }
-        #contact-view.active { display: flex; }
-        #admin-login-view.active { display: flex; }
-        #admin-dashboard-view.active { display: flex; }
+        #contact-view.active, #admin-login-view.active, #admin-dashboard-view.active { display: flex; }
         
         /* --- HEADER --- */
         header { position: fixed; top: 0; left: 0; width: 100%; padding: 20px 8%; display: flex; justify-content: space-between; align-items: center; background: #29579b; z-index: 1000; }
@@ -115,14 +113,14 @@
 <body>
 
   <header id="main-header">
-    <div class="logo" onclick="navigate('home-view')">Qfy <span>Leads</span></div>
+    <div class="logo" onclick="window.navigate('home-view')">Qfy <span>Leads</span></div>
     <nav>
-      <a onclick="navigate('home-view')">Home</a>
-      <a onclick="navigate('service-view')">Services</a>
-      <a onclick="navigate('about-view')">About</a>
-      <a onclick="navigate('faq-view')">FAQ</a>
+      <a onclick="window.navigate('home-view')">Home</a>
+      <a onclick="window.navigate('service-view')">Services</a>
+      <a onclick="window.navigate('about-view')">About</a>
+      <a onclick="window.navigate('faq-view')">FAQ</a>
     </nav>
-    <a onclick="navigate('contact-view')" class="contact-btn">Contact</a>
+    <a onclick="window.navigate('contact-view')" class="contact-btn">Contact</a>
   </header>
 
   <div id="home-view" class="page-view active">
@@ -135,7 +133,7 @@
                     <div class="call-icon"><i class="fa-solid fa-mobile-screen-button"></i></div>
                     <div><h3>+91 8878787420</h3></div>
                 </div>
-                <a onclick="navigate('contact-view')" class="main-btn">Contact Us →</a>
+                <a onclick="window.navigate('contact-view')" class="main-btn">Contact Us →</a>
             </div>
             <div class="right">
                 <div class="image-card">
@@ -221,10 +219,10 @@
         <div class="faq-layout">
             <div class="faq-sidebar">
                 <h3 style="font-size: 16px; color: #1C4D8D; margin-bottom: 20px;">Categories</h3>
-                <button class="active" onclick="showCategory(event, 'General')">General</button>
-                <button onclick="showCategory(event, 'Leads')">Leads</button>
-                <button onclick="showCategory(event, 'Technical')">Technical</button>
-                <button onclick="showCategory(event, 'Pricing')">Pricing</button>
+                <button class="active" onclick="window.showCategory(event, 'General')">General</button>
+                <button onclick="window.showCategory(event, 'Leads')">Leads</button>
+                <button onclick="window.showCategory(event, 'Technical')">Technical</button>
+                <button onclick="window.showCategory(event, 'Pricing')">Pricing</button>
             </div>
             
             <div style="flex:1;">
@@ -255,7 +253,7 @@
           <div class="login-card">
             <h2 style="text-align: center; margin-bottom: 10px; color:#000;">Admin Login</h2>
             <p style="text-align: center; margin-bottom: 20px; color: #555;">Login to CRM Dashboard</p>
-            <form onsubmit="checkLogin(event)">
+            <form onsubmit="window.checkLogin(event)">
               <label style="display:block; font-weight:600; margin-bottom:6px;">Email</label>
               <input type="email" id="admin-email" placeholder="admin@gmail.com" required>
               <label style="display:block; font-weight:600; margin-bottom:6px;">Password</label>
@@ -270,8 +268,8 @@
       <div class="dashboard-wrapper">
           <div class="sidebar">
             <h2 style="text-align: center; margin-bottom: 30px;">CRM Panel</h2>
-            <a onclick="loadDashboardData()" style="background-color: #1c60c3;">Leads Dashboard</a>
-            <a onclick="logout()" style="margin-top: 50px; color: #ff6b6b; background: rgba(255,0,0,0.1);">Logout</a>
+            <a onclick="window.loadDashboardData()" style="background-color: #1c60c3;">Leads Dashboard</a>
+            <a onclick="window.logout()" style="margin-top: 50px; color: #ff6b6b; background: rgba(255,0,0,0.1);">Logout</a>
           </div>
           <div class="main-panel">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
@@ -321,9 +319,9 @@
       <div class="footx-column">
         <h3 style="font-size:18px; margin-bottom:20px;">Quick Links</h3>
         <ul>
-          <li><a onclick="navigate('home-view')">Home</a></li>
-          <li><a onclick="navigate('service-view')">Services</a></li>
-          <li><a onclick="navigate('contact-view')">Contact</a></li>
+          <li><a onclick="window.navigate('home-view')">Home</a></li>
+          <li><a onclick="window.navigate('service-view')">Services</a></li>
+          <li><a onclick="window.navigate('contact-view')">Contact</a></li>
         </ul>
       </div>
       <div class="footx-column">
@@ -337,11 +335,10 @@
     
     <div class="footx-bottom">
         <p>© 2026 QFY Leads. All rights reserved.</p>
-        <a onclick="navigate('admin-login-view')" style="color: rgba(255,255,255,0.4); text-decoration: none; cursor: pointer; transition: 0.3s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.4)'"><i class="fa-solid fa-lock"></i> Admin Portal</a>
+        <a onclick="window.navigate('admin-login-view')" style="color: rgba(255,255,255,0.4); text-decoration: none; cursor: pointer; transition: 0.3s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.4)'"><i class="fa-solid fa-lock"></i> Admin Portal</a>
     </div>
   </footer>
 
-  <script type="module" src="config.js"></script>
   <script type="module" src="app.js"></script>
 
 </body>
