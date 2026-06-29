@@ -54,6 +54,37 @@
         .form-card button { width: 100%; background: #2f5f9f; color: #fff; font-weight: 600; padding: 12px; border: none; border-radius: 6px; cursor: pointer; transition: 0.3s; }
         .form-card button:hover { background: #1e3a8a; }
 
+        /* PUBLIC LEADS PAGE SPECIFIC UI */
+        .leads-hero { background: linear-gradient(135deg, #e0f2fe 0%, #ffffff 100%); padding: 140px 8% 60px; text-align: center; }
+        .leads-hero h1 { font-size: 38px; color: #0f2f63; font-weight: 800; margin-bottom: 15px; }
+        .leads-hero p { color: #64748b; font-size: 16px; margin-bottom: 30px; max-width: 600px; margin-inline: auto; }
+        .search-bar { max-width: 600px; margin: 0 auto; position: relative; }
+        .search-bar i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #94a3b8; }
+        .search-bar input { width: 100%; padding: 15px 15px 15px 45px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; outline: none; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        
+        .leads-filters { padding: 20px 8%; border-bottom: 1px solid #e2e8f0; background: #fff; display: flex; align-items: center; gap: 15px; overflow-x: auto; white-space: nowrap; }
+        .filter-pill { padding: 8px 16px; border: 1px solid #cbd5e1; border-radius: 50px; background: #fff; color: #64748b; cursor: pointer; font-size: 14px; font-weight: 500; transition: 0.2s; }
+        .filter-pill:hover, .filter-pill.active { background: #2f5f9f; color: #fff; border-color: #2f5f9f; }
+        
+        .leads-content { padding: 60px 8%; background: #f8fafc; min-height: 50vh; }
+        .section-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; }
+        .section-header h2 { font-size: 20px; color: #0f2f63; font-weight: 700; }
+        .section-header span { font-size: 13px; color: #94a3b8; }
+        
+        .top-leads-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; margin-bottom: 50px; }
+        .top-lead-card { background: #fff; border-radius: 12px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+        .top-lead-card h3 { font-size: 18px; color: #0f2f63; margin-bottom: 10px; }
+        .top-lead-card p { font-size: 14px; color: #64748b; margin-bottom: 20px; }
+        
+        .lead-card-new { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; display: flex; gap: 15px; text-align: left; transition: 0.3s; }
+        .lead-card-new:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .lead-icon { width: 50px; height: 50px; background: #e0f2fe; color: #0ea5e9; border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 20px; flex-shrink: 0; }
+        .lead-details h4 { font-size: 16px; color: #0f2f63; margin-bottom: 5px; }
+        .lead-details p { font-size: 13px; color: #64748b; margin-bottom: 15px; line-height: 1.5; }
+        
+        .btn-view { display: inline-block; padding: 8px 16px; background: #2f5f9f; color: #fff; border-radius: 6px; font-size: 13px; font-weight: 500; text-decoration: none; border: none; cursor: pointer; }
+        .btn-view:hover { background: #1e3a8a; }
+
         /* FOOTER */
         footer { background: #0b132b; color: #94a3b8; padding: 60px 8% 20px; }
         .foot-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 30px; margin-bottom: 30px; }
@@ -92,7 +123,7 @@
         /* Action Buttons & Badges */
         .btn-sm { padding: 6px 12px; border-radius: 4px; border: none; font-size: 12px; cursor: pointer; color: white; font-weight: 500; margin-right: 5px; }
         .bg-blue { background: #3b82f6; } .bg-green { background: #10b981; } .bg-red { background: #ef4444; } .bg-yellow { background: #eab308; } .bg-purple { background: #8b5cf6; }
-        .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; display: inline-block; }
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 600; text-transform: uppercase; display: inline-block; }
         .badge-light-blue { background: #e0e7ff; color: #4f46e5; }
         .badge-light-green { background: #dcfce7; color: #166534; }
         .badge-light-yellow { background: #fef9c3; color: #854d0e; }
@@ -118,6 +149,7 @@
 </head>
 <body>
 
+  <!-- PUBLIC HEADER -->
   <header id="main-header">
     <div class="logo" onclick="window.navigate('home-view')">Qfy <span>Leads</span></div>
     <nav>
@@ -129,6 +161,7 @@
     <a onclick="window.navigate('contact-view')" class="contact-btn">Contact</a>
   </header>
 
+  <!-- HOME VIEW -->
   <div id="home-view" class="page-view active">
     <section class="hero">
         <div class="container">
@@ -151,28 +184,65 @@
             </div>
         </div>
     </section>
-
-    <section class="section-light">
-      <h1>Industries We Serve</h1>
-      <p style="color: #64748b;">Performance‑driven lead solutions tailored for industries that demand accuracy.</p>
-      <div class="grid">
-        <div class="card"><h3>Finance</h3><p>High‑intent financial and banking prospects.</p></div>
-        <div class="card"><h3>B2B Services</h3><p>Verified business owners and decision makers.</p></div>
-        <div class="card"><h3>Renewable Energy</h3><p>Solar and green energy consumer leads.</p></div>
-      </div>
-    </section>
   </div>
 
+  <!-- PUBLIC LEADS VIEW (UPDATED DESIGN) -->
   <div id="public-leads-view" class="page-view">
-    <section class="section-light" style="padding-top: 120px; min-height: 100vh;">
-      <h1>Premium Available Leads</h1>
-      <p style="color: #64748b; margin-bottom: 40px;">Browse our latest verified lead categories published directly by our team.</p>
-      <div class="grid" id="public-leads-grid">
-          <div style="grid-column: 1 / -1; text-align: center; color: #64748b;">Loading active leads...</div>
-      </div>
-    </section>
+    <div class="leads-hero">
+        <h1>Premium Quality Leads</h1>
+        <p>Discover high-converting leads across multiple industries. Compliant, verified, and ready to help grow your business.</p>
+        <div class="search-bar">
+            <i class="fa-solid fa-search"></i>
+            <input type="text" id="lead-search-input" placeholder="Search leads by title, description, or category..." onkeyup="window.filterPublicLeads()">
+        </div>
+    </div>
+    
+    <div class="leads-filters" id="lead-filters-container">
+        <i class="fa-solid fa-filter" style="color: #94a3b8; margin-right: 10px;"></i> Filter by Category: 
+        <button class="filter-pill active" onclick="window.setLeadFilter('All')">All</button>
+        <button class="filter-pill" onclick="window.setLeadFilter('Finance')">Finance</button>
+        <button class="filter-pill" onclick="window.setLeadFilter('Legal')">Legal</button>
+        <button class="filter-pill" onclick="window.setLeadFilter('Insurance')">Insurance</button>
+        <button class="filter-pill" onclick="window.setLeadFilter('Data')">Data</button>
+        <button class="filter-pill" onclick="window.setLeadFilter('B2B')">B2B</button>
+        <button class="filter-pill" onclick="window.setLeadFilter('Marketing')">Marketing</button>
+        <button class="filter-pill" onclick="window.setLeadFilter('Healthcare')">Healthcare</button>
+        <button class="filter-pill" onclick="window.setLeadFilter('Lifestyle')">Lifestyle</button>
+        <button class="filter-pill" onclick="window.setLeadFilter('IT')">IT</button>
+        <button class="filter-pill" onclick="window.setLeadFilter('RenewableEnergy')">RenewableEnergy</button>
+    </div>
+
+    <div class="leads-content">
+        <!-- Top Leads Section -->
+        <div class="section-header">
+            <h2>Top Leads</h2>
+            <span>High-performing lead categories</span>
+        </div>
+        <div class="top-leads-grid">
+            <div class="top-lead-card">
+                <h3>Mass Tort Leads</h3>
+                <p>High-intent legal leads for mass tort and class action cases.</p>
+                <button class="btn-view" onclick="window.navigate('contact-view')">View Details →</button>
+            </div>
+            <div class="top-lead-card">
+                <h3>MCA Leads</h3>
+                <p>Merchant Cash Advance leads for lenders and funding companies.</p>
+                <button class="btn-view" onclick="window.navigate('contact-view')">View Details →</button>
+            </div>
+        </div>
+
+        <!-- Dynamic Grid Section -->
+        <div style="text-align: center; margin-bottom: 20px; font-size: 14px; color: #64748b;" id="lead-results-summary">
+            Showing all published leads
+        </div>
+        
+        <div class="grid" id="public-leads-grid" style="margin-top: 0;">
+            <div style="grid-column: 1 / -1; text-align: center; color: #64748b;">Loading active leads...</div>
+        </div>
+    </div>
   </div>
 
+  <!-- SERVICES VIEW -->
   <div id="service-view" class="page-view">
     <section class="section-light" style="padding-top: 140px; min-height: 100vh;">
       <h1>Our Services</h1>
@@ -183,6 +253,7 @@
     </section>
   </div>
 
+  <!-- ABOUT VIEW -->
   <div id="about-view" class="page-view">
     <section class="section-light" style="padding-top: 140px; min-height: 100vh;">
         <h1>About Qfy Leads</h1>
@@ -190,6 +261,7 @@
     </section>
   </div>
 
+  <!-- CONTACT VIEW -->
   <div id="contact-view" class="page-view" style="background: url('assets/office-bg.jpg') center/cover; background-color: #0f2f63; padding-top:80px;">
     <div class="form-card" style="margin: auto;">
         <h2 style="margin-bottom: 20px; text-align:center;">Contact Us</h2>
@@ -203,6 +275,7 @@
     </div>
   </div>
 
+  <!-- ADMIN LOGIN -->
   <div id="admin-login-view" class="page-view" style="background:#f1f5f9;">
     <div class="form-card" style="box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
         <h2 style="text-align: center; margin-bottom: 10px;">Admin Login</h2>
@@ -217,8 +290,10 @@
     </div>
   </div>
 
+  <!-- ADMIN DASHBOARD (CRM PANEL) -->
   <div id="admin-dashboard-view" class="page-view">
     <div class="crm-wrapper">
+        <!-- Sidebar -->
         <div class="crm-sidebar">
             <h2>CRM Panel</h2>
             <a id="nav-dash" onclick="window.switchAdminTab('dash')" class="active">Dashboard</a>
@@ -229,7 +304,9 @@
             <a onclick="window.logout()" class="logout"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</a>
         </div>
 
+        <!-- Main Area -->
         <div class="crm-main">
+            <!-- TAB 1: Dashboard -->
             <div id="tab-dash">
                 <div class="crm-header">
                     <div><h1>Admin Dashboard</h1></div>
@@ -238,11 +315,12 @@
                 <div class="stat-grid">
                     <div class="stat-card"><p>Total Leads</p><h3 id="dash-total" class="text-blue">0</h3></div>
                     <div class="stat-card"><p>Active Leads</p><h3 id="dash-active" class="text-green">0</h3></div>
-                    <div class="stat-card"><p>Categories</p><h3 id="dash-cats" class="text-orange">3</h3></div>
+                    <div class="stat-card"><p>Categories</p><h3 id="dash-cats" class="text-orange">11</h3></div>
                     <div class="stat-card"><p>New Today</p><h3 id="dash-new" class="text-blue">0</h3></div>
                 </div>
             </div>
 
+            <!-- TAB 2: Leads (Published) -->
             <div id="tab-leads" class="hidden">
                 <div class="crm-header">
                     <div><h1>Leads Management</h1><p>Manage and track all published leads</p></div>
@@ -256,6 +334,7 @@
                 </div>
             </div>
 
+            <!-- TAB 3: Users (Kanban) -->
             <div id="tab-users" class="hidden">
                 <div class="crm-header"><div><h1>Leads Pipeline</h1></div></div>
                 <div class="kanban-board">
@@ -267,6 +346,7 @@
                 </div>
             </div>
 
+            <!-- TAB 4: Contact Forms -->
             <div id="tab-contactforms" class="hidden">
                 <div class="crm-header"><div><h1>Contact Forms Management</h1></div></div>
                 <div class="crm-card">
@@ -277,6 +357,7 @@
                 </div>
             </div>
 
+            <!-- TAB 5: Reports -->
             <div id="tab-reports" class="hidden">
                 <div class="crm-header"><div><h1>Lead Analytics Dashboard</h1><p>Professional performance reports and insights</p></div></div>
                 <div class="stat-grid" style="grid-template-columns: repeat(3, 1fr);">
@@ -300,26 +381,34 @@
     </div>
   </div>
 
+  <!-- ADD LEAD MODAL -->
   <div id="add-lead-modal" class="modal-overlay hidden">
       <div class="modal">
           <h2>Add Lead</h2>
           <form class="form-card" style="box-shadow:none; padding:0;" onsubmit="window.submitNewLead(event)">
-              <input type="text" id="modal-title" placeholder="Title (e.g. Startup Funding Proposal)" required>
+              <input type="text" id="modal-title" placeholder="Title (e.g. Mass Tort Campaigns)" required>
               <select id="modal-cat" required>
                   <option value="Finance">Finance</option>
+                  <option value="Legal">Legal</option>
+                  <option value="Insurance">Insurance</option>
+                  <option value="Data">Data</option>
                   <option value="B2B">B2B</option>
+                  <option value="Marketing">Marketing</option>
+                  <option value="Healthcare">Healthcare</option>
+                  <option value="Lifestyle">Lifestyle</option>
+                  <option value="IT">IT</option>
                   <option value="RenewableEnergy">RenewableEnergy</option>
-                  <option value="Real Estate">Real Estate</option>
               </select>
               <textarea id="modal-desc" placeholder="Description" rows="4" required></textarea>
               <div style="display:flex; gap:10px; margin-top: 10px;">
                   <button type="button" style="background:#f1f5f9; color:#333;" onclick="document.getElementById('add-lead-modal').classList.add('hidden')">Cancel</button>
-                  <button type="submit" style="background:#3b82f6;">Add</button>
+                  <button type="submit" style="background:#3b82f6;">Publish Lead</button>
               </div>
           </form>
       </div>
   </div>
 
+  <!-- PUBLIC FOOTER -->
   <footer id="main-footer">
     <div class="foot-grid">
       <div>
