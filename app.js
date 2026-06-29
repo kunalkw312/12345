@@ -19,6 +19,7 @@ const firebaseConfig = {
   appId: "1:873319787899:web:3285832f2b5cda967c21de",
   measurementId: "G-PQ108NT0YX"
 };
+
     const app = initializeApp(firebaseConfig);
     db = getFirestore(app);
 } catch (error) {
@@ -30,7 +31,6 @@ const firebaseConfig = {
 // ==========================================
 window.navigate = function(viewId) {
     document.querySelectorAll('.page-view').forEach(v => v.classList.remove('active'));
-    
     const target = document.getElementById(viewId);
     if(target) target.classList.add('active');
 
@@ -42,59 +42,55 @@ window.navigate = function(viewId) {
         if (sessionStorage.getItem('adminAuth') !== 'true') {
             window.navigate('admin-login-view');
         } else {
-            window.switchAdminTab('dash'); // Default admin tab
+            window.switchAdminTab('dash'); 
         }
     }
     
     if (viewId === 'public-leads-view') {
         window.loadPublicLeads();
     }
-    
     window.scrollTo(0, 0);
 };
 
 // ==========================================
-// 3. PUBLIC ACTIONS
+// 3. PUBLIC ACTIONS (Contact Forms & Leads)
 // ==========================================
-
-// Submit Contact Form (from Home or Contact Page)
 window.submitContactForm = async function(e) {
     e.preventDefault();
-    if (!db) return alert("Database not connected.");
+    if (!db) return alert("Database not connected. Check Firebase Config.");
 
-    // Determine which form triggered this by checking inputs
-    const isHome = e.target.querySelector('#home-name') !== null;
-    const prefix = isHome ? 'home-' : 'contact-';
+    const form = e.target;
+    // Extract using the standardized 'name' attributes
+    const name = form.name.value;
+    const email = form.email.value;
+    const phone = form.phone.value;
+    const message = form.message.value;
 
-    const name = document.getElementById(prefix + 'name').value;
-    const email = document.getElementById(prefix + 'email').value;
-    const phone = document.getElementById(prefix + 'phone').value;
-    const message = document.getElementById(prefix + 'msg').value;
-
-    const btn = e.target.querySelector('button');
+    const btn = form.querySelector('button');
     const originalText = btn.innerText;
     btn.innerText = "Sending...";
 
     try {
         await addDoc(collection(db, "contact_submissions"), {
             name, email, phone, message,
-            status: "NEW", // NEW, CONTACTED, IN_PROGRESS, CONVERTED, LOST
+            status: "NEW",
             timestamp: serverTimestamp()
         });
         alert("Your request has been submitted successfully!");
-        e.target.reset();
+        form.reset();
     } catch (error) {
-        console.error(error);
-        alert("Error submitting. Please try again.");
+        console.error("Firebase Write Error:", error);
+        alert("Error submitting. Please check your Firestore Database Rules (Must allow read/write).");
     } finally {
         btn.innerText = originalText;
     }
 };
 
-// Load Published Leads for Public Site
 window.loadPublicLeads = async function() {
     const grid = document.getElementById('public-leads-grid');
-    if (!db) { grid.innerHTML = 'Database error.'; return; }
+    if (!db) { grid.innerHTML = '<div style="grid-column:1/-1;">Database error. Check Firebase Config.</div>'; return; }
+
+    grid.innerHTML = '<div style="grid-column:1/-1; text-align:center;">Loading active leads...</div>';
 
     try {
         const snap = await getDocs(collection(db, "published_leads"));
@@ -106,7 +102,6 @@ window.loadPublicLeads = async function() {
         let html = '';
         snap.forEach(doc => {
             const data = doc.data();
-            // Map category to a nice badge color
             const catColors = { "Finance": "badge-light-blue", "B2B": "badge-light-purple", "RenewableEnergy": "badge-light-green" };
             const badge = catColors[data.category] || "badge-light-yellow";
             
@@ -121,8 +116,8 @@ window.loadPublicLeads = async function() {
         });
         grid.innerHTML = html;
     } catch (e) {
-        console.error(e);
-        grid.innerHTML = 'Error loading leads.';
+        console.error("Firestore Read Error:", e);
+        grid.innerHTML = '<div style="grid-column: 1/-1; text-align:center; color:red;">Error loading leads. Check Firestore Rules.</div>';
     }
 };
 
@@ -152,23 +147,19 @@ window.logout = function() {
 // 5. CRM PANEL ROUTING & LOGIC
 // ==========================================
 window.switchAdminTab = function(tabName) {
-    // Update Sidebar CSS
     document.querySelectorAll('.crm-sidebar a').forEach(a => a.classList.remove('active'));
     document.getElementById(`nav-${tabName}`).classList.add('active');
 
-    // Hide all tabs, show target
     const tabs = ['dash', 'leads', 'users', 'contactforms', 'reports'];
     tabs.forEach(t => document.getElementById(`tab-${t}`).classList.add('hidden'));
     document.getElementById(`tab-${tabName}`).classList.remove('hidden');
 
-    // Load Data based on tab
     if(tabName === 'dash') loadAdminDash();
     if(tabName === 'leads') loadAdminLeads();
     if(tabName === 'contactforms' || tabName === 'users') loadContactFormsAndKanban();
     if(tabName === 'reports') loadAdminReports();
 };
 
-// --- Modals ---
 window.openAddLeadModal = () => document.getElementById('add-lead-modal').classList.remove('hidden');
 
 // --- Tab 1: Dashboard Data ---
@@ -177,8 +168,8 @@ async function loadAdminDash() {
     try {
         const snap = await getDocs(collection(db, "published_leads"));
         document.getElementById('dash-total').innerText = snap.size;
-        document.getElementById('dash-active').innerText = snap.size; // Assuming all published are active
-        document.getElementById('dash-new').innerText = 0; // Requires complex date logic, hardcoded for visual per screenshot
+        document.getElementById('dash-active').innerText = snap.size; 
+        document.getElementById('dash-new').innerText = 0; 
     } catch(e) { console.error(e); }
 }
 
@@ -195,9 +186,9 @@ window.submitNewLead = async function(e) {
         });
         document.getElementById('add-lead-modal').classList.add('hidden');
         e.target.reset();
-        loadAdminLeads(); // refresh
-        loadAdminDash(); // refresh counts
-    } catch (err) { alert("Error adding lead."); }
+        loadAdminLeads();
+        loadAdminDash();
+    } catch (err) { console.error(err); alert("Error adding lead."); }
 };
 
 window.deletePublishedLead = async function(id) {
@@ -225,19 +216,18 @@ async function loadAdminLeads() {
                 <td><span class="badge ${badgeColor}">${data.category}</span></td>
                 <td><span class="badge badge-light-green">Active</span></td>
                 <td>
-                    <button class="btn-sm bg-yellow">Edit</button>
                     <button class="btn-sm bg-red" onclick="window.deletePublishedLead('${d.id}')">Delete</button>
                 </td>
             </tr>`;
         });
         tbody.innerHTML = html || '<tr><td colspan="4">No leads published.</td></tr>';
-    } catch(e) { tbody.innerHTML = '<tr><td colspan="4">Error</td></tr>'; }
+    } catch(e) { console.error(e); tbody.innerHTML = '<tr><td colspan="4" style="color:red;">Error loading leads. Check Firestore Rules.</td></tr>'; }
 }
 
 // --- Tab 3 & 4: Users (Kanban) & Contact Forms ---
 window.updateContactStatus = async function(id, newStatus) {
     await updateDoc(doc(db, "contact_submissions", id), { status: newStatus });
-    loadContactFormsAndKanban(); // Refresh both views
+    loadContactFormsAndKanban();
 };
 
 window.deleteContactForm = async function(id) {
@@ -249,8 +239,6 @@ window.deleteContactForm = async function(id) {
 async function loadContactFormsAndKanban() {
     if(!db) return;
     const tbody = document.getElementById('admin-contact-forms-table');
-    
-    // Clear Kanban
     const kb = { NEW: '', CONTACTED: '', IN_PROGRESS: '', CONVERTED: '', LOST: '' };
 
     try {
@@ -262,7 +250,6 @@ async function loadContactFormsAndKanban() {
             const id = d.id;
             const s = data.status || "NEW";
             
-            // Build Table Row
             let sBadge = s === 'NEW' ? 'badge-light-blue' : s === 'CONTACTED' ? 'badge-light-yellow' : s === 'IN_PROGRESS' ? 'badge-light-purple' : 'badge-light-green';
             if(s==='LOST') sBadge = 'badge-light-red';
 
@@ -274,24 +261,22 @@ async function loadContactFormsAndKanban() {
                 <td><div style="max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${data.message}</div></td>
                 <td><span class="badge ${sBadge}">${s}</span></td>
                 <td style="min-width: 250px;">
-                    <button class="btn-sm bg-blue" onclick="window.updateContactStatus('${id}','CONTACTED')">Contacted</button>
-                    <button class="btn-sm bg-purple" onclick="window.updateContactStatus('${id}','IN_PROGRESS')">In Progress</button>
+                    <button class="btn-sm bg-blue" onclick="window.updateContactStatus('${id}','CONTACTED')">Contact</button>
+                    <button class="btn-sm bg-purple" onclick="window.updateContactStatus('${id}','IN_PROGRESS')">Progress</button>
                     <button class="btn-sm bg-green" onclick="window.updateContactStatus('${id}','CONVERTED')">Convert</button>
-                    <button class="btn-sm bg-red" onclick="window.deleteContactForm('${id}')">Delete</button>
+                    <button class="btn-sm bg-red" onclick="window.updateContactStatus('${id}','LOST')">Lost</button>
                 </td>
             </tr>`;
 
-            // Build Kanban Card
             if(kb[s] !== undefined) {
                 kb[s] += `<div class="kanban-card">${data.name}</div>`;
             } else {
-                kb['NEW'] += `<div class="kanban-card">${data.name}</div>`; // fallback
+                kb['NEW'] += `<div class="kanban-card">${data.name}</div>`; 
             }
         });
 
         tbody.innerHTML = tableHtml || '<tr><td colspan="6">No form submissions yet.</td></tr>';
         
-        // Inject Kanban
         document.getElementById('kb-new').innerHTML = kb.NEW || '<div style="color:#94a3b8; font-size:12px; text-align:center;">No Leads</div>';
         document.getElementById('kb-contacted').innerHTML = kb.CONTACTED || '<div style="color:#94a3b8; font-size:12px; text-align:center;">No Leads</div>';
         document.getElementById('kb-inprogress').innerHTML = kb.IN_PROGRESS || '<div style="color:#94a3b8; font-size:12px; text-align:center;">No Leads</div>';
@@ -300,7 +285,7 @@ async function loadContactFormsAndKanban() {
 
     } catch (e) {
         console.error(e);
-        tbody.innerHTML = '<tr><td colspan="6">Error loading data.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="color:red;">Error loading data. Check Firestore Rules.</td></tr>';
     }
 }
 
@@ -314,14 +299,13 @@ async function loadAdminReports() {
         snap.forEach(d => {
             const s = d.data().status;
             if(s === 'LOST') lost++;
-            else active++; // NEW, CONTACTED, IN_PROGRESS, CONVERTED count as active pipeline
+            else active++; 
         });
 
         document.getElementById('rep-total').innerText = total;
         document.getElementById('rep-active').innerText = active;
         document.getElementById('rep-inactive').innerText = lost;
 
-        // Animate basic CSS Chart
         setTimeout(() => {
             document.getElementById('chart-total').style.height = total > 0 ? '100%' : '10%';
             document.getElementById('chart-active').style.height = total > 0 ? `${(active/total)*100}%` : '10%';
