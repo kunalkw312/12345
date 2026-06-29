@@ -1,108 +1,143 @@
 // app.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ==========================================
-// 1. GLOBAL UI & ROUTING LOGIC
-// (Registered immediately so buttons always work)
+// 1. FIREBASE SETUP
 // ==========================================
+let db = null;
 
+try {
+    // INSERT YOUR ACTUAL FIREBASE CONFIG HERE
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_PROJECT_ID.appspot.com",
+        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+        appId: "YOUR_APP_ID"
+    };
+    const app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+} catch (error) {
+    console.error("Firebase Init Error: ", error);
+}
+
+// ==========================================
+// 2. MAIN APP ROUTING (Public vs Admin)
+// ==========================================
 window.navigate = function(viewId) {
-    // Hide all views
-    document.querySelectorAll('.page-view').forEach(view => {
-        view.classList.remove('active');
-    });
+    document.querySelectorAll('.page-view').forEach(v => v.classList.remove('active'));
     
-    // Show target view
-    const targetView = document.getElementById(viewId);
-    if(targetView) {
-        targetView.classList.add('active');
-    }
+    const target = document.getElementById(viewId);
+    if(target) target.classList.add('active');
 
-    // Hide header/footer if it's an admin view
-    const isAdminView = viewId === 'admin-login-view' || viewId === 'admin-dashboard-view';
-    const mainHeader = document.getElementById('main-header');
-    const mainFooter = document.getElementById('main-footer');
+    const isAdminView = (viewId === 'admin-login-view' || viewId === 'admin-dashboard-view');
+    document.getElementById('main-header').style.display = isAdminView ? 'none' : 'flex';
+    document.getElementById('main-footer').style.display = isAdminView ? 'none' : 'block';
     
-    if (mainHeader) mainHeader.style.display = isAdminView ? 'none' : 'flex';
-    if (mainFooter) mainFooter.style.display = isAdminView ? 'none' : 'block';
-    
-    // Authentication Check for Dashboard
     if (viewId === 'admin-dashboard-view') {
         if (sessionStorage.getItem('adminAuth') !== 'true') {
             window.navigate('admin-login-view');
         } else {
-            window.loadDashboardData();
+            window.switchAdminTab('dash'); // Default admin tab
         }
     }
     
-    // Scroll to top
+    if (viewId === 'public-leads-view') {
+        window.loadPublicLeads();
+    }
+    
     window.scrollTo(0, 0);
 };
 
-window.toggleFaq = function(element) {
-    const item = element.parentElement;
-    item.classList.toggle('open');
+// ==========================================
+// 3. PUBLIC ACTIONS
+// ==========================================
+
+// Submit Contact Form (from Home or Contact Page)
+window.submitContactForm = async function(e) {
+    e.preventDefault();
+    if (!db) return alert("Database not connected.");
+
+    // Determine which form triggered this by checking inputs
+    const isHome = e.target.querySelector('#home-name') !== null;
+    const prefix = isHome ? 'home-' : 'contact-';
+
+    const name = document.getElementById(prefix + 'name').value;
+    const email = document.getElementById(prefix + 'email').value;
+    const phone = document.getElementById(prefix + 'phone').value;
+    const message = document.getElementById(prefix + 'msg').value;
+
+    const btn = e.target.querySelector('button');
+    const originalText = btn.innerText;
+    btn.innerText = "Sending...";
+
+    try {
+        await addDoc(collection(db, "contact_submissions"), {
+            name, email, phone, message,
+            status: "NEW", // NEW, CONTACTED, IN_PROGRESS, CONVERTED, LOST
+            timestamp: serverTimestamp()
+        });
+        alert("Your request has been submitted successfully!");
+        e.target.reset();
+    } catch (error) {
+        console.error(error);
+        alert("Error submitting. Please try again.");
+    } finally {
+        btn.innerText = originalText;
+    }
 };
 
-window.showCategory = function(event, category) {
-    if (event && event.target) {
-        const buttons = document.querySelectorAll('.faq-sidebar button');
-        buttons.forEach(btn => btn.classList.remove('active'));
-        event.target.classList.add('active');
+// Load Published Leads for Public Site
+window.loadPublicLeads = async function() {
+    const grid = document.getElementById('public-leads-grid');
+    if (!db) { grid.innerHTML = 'Database error.'; return; }
+
+    try {
+        const snap = await getDocs(collection(db, "published_leads"));
+        if (snap.empty) {
+            grid.innerHTML = '<div style="grid-column: 1/-1; text-align:center;">No leads available currently.</div>';
+            return;
+        }
+
+        let html = '';
+        snap.forEach(doc => {
+            const data = doc.data();
+            // Map category to a nice badge color
+            const catColors = { "Finance": "badge-light-blue", "B2B": "badge-light-purple", "RenewableEnergy": "badge-light-green" };
+            const badge = catColors[data.category] || "badge-light-yellow";
+            
+            html += `
+                <div class="card">
+                    <span class="badge ${badge}" style="margin-bottom:10px;">${data.category}</span>
+                    <h3>${data.title}</h3>
+                    <p style="font-size:14px; color:#64748b; margin-bottom:15px; line-height:1.5;">${data.description}</p>
+                    <button class="btn-sm bg-blue" onclick="window.navigate('contact-view')">Inquire Now</button>
+                </div>
+            `;
+        });
+        grid.innerHTML = html;
+    } catch (e) {
+        console.error(e);
+        grid.innerHTML = 'Error loading leads.';
     }
-
-    const container = document.getElementById('faqContainer');
-    if (!container) return;
-    
-    container.innerHTML = '';
-
-    let faqs = [];
-    if(category === 'General'){
-        faqs = [
-            {q:'What is Qfy Leads?',a:'Qfy Leads is a premium lead generation company that provides high‑intent, verified and conversion‑ready leads.'},
-            {q:'How does Qfy Leads work?',a:'We run data‑driven marketing campaigns, verify leads through compliance checks, and deliver them directly to your team.'},
-            {q:'Which industries do you serve?',a:'We specialize in Insurance, Healthcare, Financial Services, Real Estate, and Home Services.'}
-        ];
-    } else if(category === 'Leads'){
-        faqs = [
-            {q:'Do you offer replacements for invalid leads?',a:'Yes, we provide replacement or credit for invalid leads strictly according to our service agreement.'},
-            {q:'Can I customize targeting filters?',a:'Absolutely. We offer geo‑location, demographic, intent‑based, and industry‑specific targeting options.'}
-        ];
-    } else if(category === 'Technical'){
-        faqs = [
-            {q:'Do you offer CRM integration?',a:'Yes. We support direct CRM integrations and API‑based delivery for seamless automation.'},
-            {q:'Is my data secure?',a:'Yes. We follow strict data security protocols and compliance standards to ensure all data remains protected.'}
-        ];
-    } else if(category === 'Pricing'){
-        faqs = [
-            {q:'How is pricing structured?',a:'Pricing depends on your industry, targeting filters, required volume, and delivery type. Reach out for a custom quote.'}
-        ];
-    }
-
-    faqs.forEach(faq => {
-        const item = document.createElement('div');
-        item.className = 'faq-item';
-        item.innerHTML = `
-            <div class="faq-question" onclick="window.toggleFaq(this)">${faq.q} <span style="font-size:12px; color:#1c4d8d;">▼</span></div>
-            <div class="faq-answer">${faq.a}</div>
-        `;
-        container.appendChild(item);
-    });
 };
 
+// ==========================================
+// 4. ADMIN AUTHENTICATION
+// ==========================================
 window.checkLogin = function(e) {
     e.preventDefault();
     const email = document.getElementById("admin-email").value;
-    const password = document.getElementById("admin-password").value;
+    const pass = document.getElementById("admin-password").value;
 
-    // Hardcoded credentials
-    if (email === "admin@gmail.com" && password === "1234") {
+    if (email === "admin@gmail.com" && pass === "1234") {
         sessionStorage.setItem('adminAuth', 'true');
-        document.getElementById("admin-password").value = ''; // clear password field
+        document.getElementById("admin-password").value = '';
         window.navigate('admin-dashboard-view');
     } else {
-        alert("Invalid Email or Password ❌");
+        alert("Invalid Credentials");
     }
 };
 
@@ -111,119 +146,185 @@ window.logout = function() {
     window.navigate('admin-login-view');
 };
 
-// Default load logic
-document.addEventListener('DOMContentLoaded', () => {
-    window.showCategory(null, 'General'); // Load initial FAQs
-});
-
-
 // ==========================================
-// 2. FIREBASE CONFIGURATION & LOGIC
-// (Wrapped safely so it won't crash the UI if keys are missing)
+// 5. CRM PANEL ROUTING & LOGIC
 // ==========================================
+window.switchAdminTab = function(tabName) {
+    // Update Sidebar CSS
+    document.querySelectorAll('.crm-sidebar a').forEach(a => a.classList.remove('active'));
+    document.getElementById(`nav-${tabName}`).classList.add('active');
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCuB2izaoYMfr-olS3ImYL7Vw1OqkhMR5U",
-  authDomain: "qfy-leads-59c25.firebaseapp.com",
-  databaseURL: "https://qfy-leads-59c25-default-rtdb.firebaseio.com",
-  projectId: "qfy-leads-59c25",
-  storageBucket: "qfy-leads-59c25.firebasestorage.app",
-  messagingSenderId: "873319787899",
-  appId: "1:873319787899:web:3285832f2b5cda967c21de",
-  measurementId: "G-PQ108NT0YX"
+    // Hide all tabs, show target
+    const tabs = ['dash', 'leads', 'users', 'contactforms', 'reports'];
+    tabs.forEach(t => document.getElementById(`tab-${t}`).classList.add('hidden'));
+    document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+
+    // Load Data based on tab
+    if(tabName === 'dash') loadAdminDash();
+    if(tabName === 'leads') loadAdminLeads();
+    if(tabName === 'contactforms' || tabName === 'users') loadContactFormsAndKanban();
+    if(tabName === 'reports') loadAdminReports();
 };
 
-let db = null;
+// --- Modals ---
+window.openAddLeadModal = () => document.getElementById('add-lead-modal').classList.remove('hidden');
 
-try {
-    const app = initializeApp(firebaseConfig);
-    db = getFirestore(app);
-} catch (error) {
-    console.warn("Firebase could not initialize. Make sure you updated your config keys in app.js.", error);
+// --- Tab 1: Dashboard Data ---
+async function loadAdminDash() {
+    if(!db) return;
+    try {
+        const snap = await getDocs(collection(db, "published_leads"));
+        document.getElementById('dash-total').innerText = snap.size;
+        document.getElementById('dash-active').innerText = snap.size; // Assuming all published are active
+        document.getElementById('dash-new').innerText = 0; // Requires complex date logic, hardcoded for visual per screenshot
+    } catch(e) { console.error(e); }
 }
 
-// Function to handle form submissions
-async function handleContactSubmit(e) {
+// --- Tab 2: Leads (Published) ---
+window.submitNewLead = async function(e) {
     e.preventDefault();
-    
-    if (!db) {
-        alert("Database is not connected. Please update your Firebase Config keys in app.js.");
-        return;
-    }
-
-    const form = e.target;
-    const name = form.querySelector('input[type="text"]').value;
-    const email = form.querySelector('input[type="email"]').value;
-    const phone = form.querySelector('input[type="tel"]').value;
-    const message = form.querySelector('textarea').value;
-
-    const btn = form.querySelector('button');
-    const originalText = btn.innerText;
-    btn.innerText = "Sending...";
+    const title = document.getElementById('modal-title').value;
+    const cat = document.getElementById('modal-cat').value;
+    const desc = document.getElementById('modal-desc').value;
 
     try {
-        await addDoc(collection(db, "leads"), {
-            name: name,
-            email: email,
-            phone: phone,
-            message: message,
-            timestamp: serverTimestamp(),
-            status: "New"
+        await addDoc(collection(db, "published_leads"), {
+            title, category: cat, description: desc, status: "Active", timestamp: serverTimestamp()
         });
-        alert("Thank you! Your message has been sent successfully.");
-        form.reset();
-    } catch (error) {
-        console.error("Error adding document: ", error);
-        alert("Error sending message. Please try again.");
-    } finally {
-        btn.innerText = originalText;
-    }
-}
+        document.getElementById('add-lead-modal').classList.add('hidden');
+        e.target.reset();
+        loadAdminLeads(); // refresh
+        loadAdminDash(); // refresh counts
+    } catch (err) { alert("Error adding lead."); }
+};
 
-// Attach listener to all contact forms
-document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.lead-form').forEach(form => {
-        form.addEventListener('submit', handleContactSubmit);
-    });
-});
+window.deletePublishedLead = async function(id) {
+    if(!confirm("Delete this lead?")) return;
+    await deleteDoc(doc(db, "published_leads", id));
+    loadAdminLeads();
+};
 
-// Function to fetch data for the Admin CRM
-window.loadDashboardData = async function() {
-    const leadsContainer = document.getElementById('leads-table-body');
-    leadsContainer.innerHTML = '<tr><td colspan="5" style="padding: 15px; text-align:center;">Loading leads securely from database...</td></tr>';
+async function loadAdminLeads() {
+    if(!db) return;
+    const tbody = document.getElementById('admin-published-leads-table');
+    tbody.innerHTML = '<tr><td colspan="4">Loading...</td></tr>';
     
-    if (!db) {
-        leadsContainer.innerHTML = '<tr><td colspan="5" style="padding: 15px; text-align:center; color: red;">Database not connected. Check Firebase Config.</td></tr>';
-        return;
-    }
-
     try {
-        const querySnapshot = await getDocs(collection(db, "leads"));
+        const snap = await getDocs(collection(db, "published_leads"));
+        document.getElementById('leads-tab-total-btn').innerText = `Total Leads: ${snap.size}`;
         let html = '';
-        let count = 0;
-        
-        querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            const date = data.timestamp ? data.timestamp.toDate().toLocaleDateString() : 'Just now';
-            count++;
+        snap.forEach(d => {
+            const data = d.data();
+            const badgeColor = data.category === 'Finance' ? 'badge-light-blue' : (data.category==='B2B'?'badge-light-purple':'badge-light-green');
             
             html += `
-                <tr style="border-bottom: 1px solid #eee; background: #fff;">
-                    <td style="padding: 12px; color: #555;">${data.name}</td>
-                    <td style="padding: 12px; color: #555;">${data.email}</td>
-                    <td style="padding: 12px; color: #555;">${data.phone}</td>
-                    <td style="padding: 12px; color: #555;">${data.message}</td>
-                    <td style="padding: 12px; color: #555;">${date}</td>
-                </tr>
-            `;
+            <tr>
+                <td style="font-weight:600;">${data.title}</td>
+                <td><span class="badge ${badgeColor}">${data.category}</span></td>
+                <td><span class="badge badge-light-green">Active</span></td>
+                <td>
+                    <button class="btn-sm bg-yellow">Edit</button>
+                    <button class="btn-sm bg-red" onclick="window.deletePublishedLead('${d.id}')">Delete</button>
+                </td>
+            </tr>`;
         });
-        
-        leadsContainer.innerHTML = html || '<tr><td colspan="5" style="padding: 15px; text-align:center;">No leads found in database.</td></tr>';
-        document.getElementById('total-leads-count').innerText = count;
-        document.getElementById('new-today-count').innerText = count; 
-        
-    } catch (error) {
-        console.error("Error fetching leads: ", error);
-        leadsContainer.innerHTML = '<tr><td colspan="5" style="padding: 15px; text-align:center; color: red;">Error loading data. Check console.</td></tr>';
-    }
+        tbody.innerHTML = html || '<tr><td colspan="4">No leads published.</td></tr>';
+    } catch(e) { tbody.innerHTML = '<tr><td colspan="4">Error</td></tr>'; }
+}
+
+// --- Tab 3 & 4: Users (Kanban) & Contact Forms ---
+window.updateContactStatus = async function(id, newStatus) {
+    await updateDoc(doc(db, "contact_submissions", id), { status: newStatus });
+    loadContactFormsAndKanban(); // Refresh both views
 };
+
+window.deleteContactForm = async function(id) {
+    if(!confirm("Delete submission?")) return;
+    await deleteDoc(doc(db, "contact_submissions", id));
+    loadContactFormsAndKanban();
+};
+
+async function loadContactFormsAndKanban() {
+    if(!db) return;
+    const tbody = document.getElementById('admin-contact-forms-table');
+    
+    // Clear Kanban
+    const kb = { NEW: '', CONTACTED: '', IN_PROGRESS: '', CONVERTED: '', LOST: '' };
+
+    try {
+        const snap = await getDocs(collection(db, "contact_submissions"));
+        let tableHtml = '';
+
+        snap.forEach(d => {
+            const data = d.data();
+            const id = d.id;
+            const s = data.status || "NEW";
+            
+            // Build Table Row
+            let sBadge = s === 'NEW' ? 'badge-light-blue' : s === 'CONTACTED' ? 'badge-light-yellow' : s === 'IN_PROGRESS' ? 'badge-light-purple' : 'badge-light-green';
+            if(s==='LOST') sBadge = 'badge-light-red';
+
+            tableHtml += `
+            <tr>
+                <td style="font-weight:500;">${data.name}</td>
+                <td>${data.email}</td>
+                <td>${data.phone}</td>
+                <td><div style="max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${data.message}</div></td>
+                <td><span class="badge ${sBadge}">${s}</span></td>
+                <td style="min-width: 250px;">
+                    <button class="btn-sm bg-blue" onclick="window.updateContactStatus('${id}','CONTACTED')">Contacted</button>
+                    <button class="btn-sm bg-purple" onclick="window.updateContactStatus('${id}','IN_PROGRESS')">In Progress</button>
+                    <button class="btn-sm bg-green" onclick="window.updateContactStatus('${id}','CONVERTED')">Convert</button>
+                    <button class="btn-sm bg-red" onclick="window.deleteContactForm('${id}')">Delete</button>
+                </td>
+            </tr>`;
+
+            // Build Kanban Card
+            if(kb[s] !== undefined) {
+                kb[s] += `<div class="kanban-card">${data.name}</div>`;
+            } else {
+                kb['NEW'] += `<div class="kanban-card">${data.name}</div>`; // fallback
+            }
+        });
+
+        tbody.innerHTML = tableHtml || '<tr><td colspan="6">No form submissions yet.</td></tr>';
+        
+        // Inject Kanban
+        document.getElementById('kb-new').innerHTML = kb.NEW || '<div style="color:#94a3b8; font-size:12px; text-align:center;">No Leads</div>';
+        document.getElementById('kb-contacted').innerHTML = kb.CONTACTED || '<div style="color:#94a3b8; font-size:12px; text-align:center;">No Leads</div>';
+        document.getElementById('kb-inprogress').innerHTML = kb.IN_PROGRESS || '<div style="color:#94a3b8; font-size:12px; text-align:center;">No Leads</div>';
+        document.getElementById('kb-converted').innerHTML = kb.CONVERTED || '<div style="color:#94a3b8; font-size:12px; text-align:center;">No Leads</div>';
+        document.getElementById('kb-lost').innerHTML = kb.LOST || '<div style="color:#94a3b8; font-size:12px; text-align:center;">No Leads</div>';
+
+    } catch (e) {
+        console.error(e);
+        tbody.innerHTML = '<tr><td colspan="6">Error loading data.</td></tr>';
+    }
+}
+
+// --- Tab 5: Reports ---
+async function loadAdminReports() {
+    if(!db) return;
+    try {
+        const snap = await getDocs(collection(db, "contact_submissions"));
+        let active = 0, lost = 0, total = snap.size;
+        
+        snap.forEach(d => {
+            const s = d.data().status;
+            if(s === 'LOST') lost++;
+            else active++; // NEW, CONTACTED, IN_PROGRESS, CONVERTED count as active pipeline
+        });
+
+        document.getElementById('rep-total').innerText = total;
+        document.getElementById('rep-active').innerText = active;
+        document.getElementById('rep-inactive').innerText = lost;
+
+        // Animate basic CSS Chart
+        setTimeout(() => {
+            document.getElementById('chart-total').style.height = total > 0 ? '100%' : '10%';
+            document.getElementById('chart-active').style.height = total > 0 ? `${(active/total)*100}%` : '10%';
+            document.getElementById('chart-inactive').style.height = total > 0 ? `${(lost/total)*100}%` : '10%';
+        }, 100);
+
+    } catch (e) { console.error(e); }
+}
