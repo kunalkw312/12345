@@ -26,6 +26,10 @@ const firebaseConfig = {
     console.error("Firebase Init Error: ", error);
 }
 
+// Global state for public leads filtering
+let allPublishedLeads = [];
+let currentCategoryFilter = 'All';
+
 // ==========================================
 // 2. MAIN APP ROUTING (Public vs Admin)
 // ==========================================
@@ -60,7 +64,6 @@ window.submitContactForm = async function(e) {
     if (!db) return alert("Database not connected. Check Firebase Config.");
 
     const form = e.target;
-    // Extract using the standardized 'name' attributes
     const name = form.name.value;
     const email = form.email.value;
     const phone = form.phone.value;
@@ -80,7 +83,7 @@ window.submitContactForm = async function(e) {
         form.reset();
     } catch (error) {
         console.error("Firebase Write Error:", error);
-        alert("Error submitting. Please check your Firestore Database Rules (Must allow read/write).");
+        alert("Error submitting. Please check your Firestore Database Rules.");
     } finally {
         btn.innerText = originalText;
     }
@@ -94,32 +97,90 @@ window.loadPublicLeads = async function() {
 
     try {
         const snap = await getDocs(collection(db, "published_leads"));
-        if (snap.empty) {
-            grid.innerHTML = '<div style="grid-column: 1/-1; text-align:center;">No leads available currently.</div>';
-            return;
-        }
-
-        let html = '';
+        allPublishedLeads = [];
+        
         snap.forEach(doc => {
-            const data = doc.data();
-            const catColors = { "Finance": "badge-light-blue", "B2B": "badge-light-purple", "RenewableEnergy": "badge-light-green" };
-            const badge = catColors[data.category] || "badge-light-yellow";
-            
-            html += `
-                <div class="card">
-                    <span class="badge ${badge}" style="margin-bottom:10px;">${data.category}</span>
-                    <h3>${data.title}</h3>
-                    <p style="font-size:14px; color:#64748b; margin-bottom:15px; line-height:1.5;">${data.description}</p>
-                    <button class="btn-sm bg-blue" onclick="window.navigate('contact-view')">Inquire Now</button>
-                </div>
-            `;
+            allPublishedLeads.push(doc.data());
         });
-        grid.innerHTML = html;
+        
+        window.filterPublicLeads(); // Render leads immediately using default filters
+        
     } catch (e) {
         console.error("Firestore Read Error:", e);
         grid.innerHTML = '<div style="grid-column: 1/-1; text-align:center; color:red;">Error loading leads. Check Firestore Rules.</div>';
     }
 };
+
+// Handle Category Pill Clicks
+window.setLeadFilter = function(category) {
+    currentCategoryFilter = category;
+    
+    // Update active pill UI
+    document.querySelectorAll('.filter-pill').forEach(btn => {
+        if(btn.innerText === category) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+    
+    window.filterPublicLeads();
+}
+
+// Filter and Render Leads
+window.filterPublicLeads = function() {
+    const grid = document.getElementById('public-leads-grid');
+    const searchTerm = document.getElementById('lead-search-input').value.toLowerCase();
+    
+    let filteredLeads = allPublishedLeads.filter(lead => {
+        // Match Category
+        const matchesCategory = currentCategoryFilter === 'All' || lead.category === currentCategoryFilter;
+        // Match Search term
+        const matchesSearch = lead.title.toLowerCase().includes(searchTerm) || lead.description.toLowerCase().includes(searchTerm) || lead.category.toLowerCase().includes(searchTerm);
+        
+        return matchesCategory && matchesSearch;
+    });
+    
+    // Update the Summary Text
+    const summary = document.getElementById('lead-results-summary');
+    if(summary) {
+        summary.innerText = currentCategoryFilter === 'All' 
+            ? `Showing ${filteredLeads.length} total leads` 
+            : `Showing ${filteredLeads.length} leads in ${currentCategoryFilter}`;
+    }
+
+    if (filteredLeads.length === 0) {
+        grid.innerHTML = '<div style="grid-column: 1/-1; text-align:center;">No leads match your criteria.</div>';
+        return;
+    }
+
+    let html = '';
+    filteredLeads.forEach(data => {
+        // Assign icon based on category
+        let iconClass = "fa-briefcase";
+        if (data.category === "Insurance") iconClass = "fa-shield-halved";
+        if (data.category === "Finance") iconClass = "fa-dollar-sign";
+        if (data.category === "Legal") iconClass = "fa-scale-balanced";
+        if (data.category === "Healthcare") iconClass = "fa-heart-pulse";
+        if (data.category === "RenewableEnergy") iconClass = "fa-leaf";
+        if (data.category === "IT") iconClass = "fa-laptop-code";
+        
+        html += `
+            <div class="lead-card-new">
+                <div class="lead-icon"><i class="fa-solid ${iconClass}"></i></div>
+                <div class="lead-details" style="flex: 1;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 5px;">
+                        <h4>${data.title}</h4>
+                        <span class="badge badge-light-blue" style="background:#e0f2fe; color:#0f2f63;">${data.category}</span>
+                    </div>
+                    <p>${data.description}</p>
+                    <button class="btn-view" onclick="window.navigate('contact-view')">View Details →</button>
+                </div>
+            </div>
+        `;
+    });
+    grid.innerHTML = html;
+}
 
 // ==========================================
 // 4. ADMIN AUTHENTICATION
