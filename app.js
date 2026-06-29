@@ -9,14 +9,16 @@ let db = null;
 
 try {
     // INSERT YOUR ACTUAL FIREBASE CONFIG HERE
-    const firebaseConfig = {
-        apiKey: "YOUR_API_KEY",
-        authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-        projectId: "YOUR_PROJECT_ID",
-        storageBucket: "YOUR_PROJECT_ID.appspot.com",
-        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-        appId: "YOUR_APP_ID"
-    };
+const firebaseConfig = {
+  apiKey: "AIzaSyCuB2izaoYMfr-olS3ImYL7Vw1OqkhMR5U",
+  authDomain: "qfy-leads-59c25.firebaseapp.com",
+  databaseURL: "https://qfy-leads-59c25-default-rtdb.firebaseio.com",
+  projectId: "qfy-leads-59c25",
+  storageBucket: "qfy-leads-59c25.firebasestorage.app",
+  messagingSenderId: "873319787899",
+  appId: "1:873319787899:web:3285832f2b5cda967c21de",
+  measurementId: "G-PQ108NT0YX"
+};
     const app = initializeApp(firebaseConfig);
     db = getFirestore(app);
 } catch (error) {
