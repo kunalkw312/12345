@@ -1,377 +1,507 @@
-// app.js
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+// =========================================================================
+// ARCHITECTURE LOGIC STACK CORE MATRIX INFRASTRUCTURE INTERFACE
+// =========================================================================
+import { db, auth } from './config.js';
+import { 
+    collection, addDoc, getDocs, onSnapshot, query, where, doc, deleteDoc, updateDoc, serverTimestamp 
+} from "https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js";
+import { 
+    signInWithEmailAndPassword, signOut, onAuthStateChanged 
+} from "https://www.gstatic.com/firebasejs/11.2.0/firebase-auth.js";
 
-// ==========================================
-// 1. FIREBASE SETUP
-// ==========================================
-let db = null;
+// STATE REGISTRATION & CONFIGURATION PROPERTIES VARIABLES TRACK
+let currentFilterCategory = 'all';
+let publicLeadsTrackingArray = [];
 
-try {
-    // INSERT YOUR ACTUAL FIREBASE CONFIG HERE
-const firebaseConfig = {
-  apiKey: "AIzaSyCuB2izaoYMfr-olS3ImYL7Vw1OqkhMR5U",
-  authDomain: "qfy-leads-59c25.firebaseapp.com",
-  databaseURL: "https://qfy-leads-59c25-default-rtdb.firebaseio.com",
-  projectId: "qfy-leads-59c25",
-  storageBucket: "qfy-leads-59c25.firebasestorage.app",
-  messagingSenderId: "873319787899",
-  appId: "1:873319787899:web:3285832f2b5cda967c21de",
-  measurementId: "G-PQ108NT0YX"
-};
-
-    const app = initializeApp(firebaseConfig);
-    db = getFirestore(app);
-} catch (error) {
-    console.error("Firebase Init Error: ", error);
-}
-
-// Global state for public leads filtering
-let allPublishedLeads = [];
-let currentCategoryFilter = 'All';
-
-// ==========================================
-// 2. MAIN APP ROUTING (Public vs Admin)
-// ==========================================
+// =========================================================================
+// APPLICATION COMPILER CONTROLLER SINGLE PAGE ROUTING ENGINE (SPA)
+// =========================================================================
 window.navigate = function(viewId) {
-    document.querySelectorAll('.page-view').forEach(v => v.classList.remove('active'));
-    const target = document.getElementById(viewId);
-    if(target) target.classList.add('active');
+    // Structural Visibility Mutation Interceptor
+    document.querySelectorAll('.page-view').forEach(view => {
+        view.classList.remove('active');
+    });
 
-    const isAdminView = (viewId === 'admin-login-view' || viewId === 'admin-dashboard-view');
-    document.getElementById('main-header').style.display = isAdminView ? 'none' : 'flex';
-    document.getElementById('main-footer').style.display = isAdminView ? 'none' : 'block';
+    const targetViewportNode = document.getElementById(viewId);
+    if (targetViewportNode) {
+        targetViewportNode.classList.add('active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Adaptive Operational System Navigation Bars Visibility Mapping Interceptors
+    const masterHeaderElement = document.getElementById('main-header');
+    const primaryAppFooterElement = document.getElementById('global-application-footer');
     
     if (viewId === 'admin-dashboard-view') {
-        if (sessionStorage.getItem('adminAuth') !== 'true') {
-            window.navigate('admin-login-view');
-        } else {
-            window.switchAdminTab('dash'); 
-        }
+        masterHeaderElement.style.display = 'none';
+        primaryAppFooterElement.style.display = 'none';
+        loadAdminDashboardData();
+    } else {
+        masterHeaderElement.style.display = 'flex';
+        primaryAppFooterElement.style.display = 'block';
     }
-    
+
     if (viewId === 'public-leads-view') {
-        window.loadPublicLeads();
+        initializeRealtimePublicLeadsStream();
     }
-    window.scrollTo(0, 0);
 };
 
-// ==========================================
-// 3. PUBLIC ACTIONS (Contact Forms & Leads)
-// ==========================================
-window.submitContactForm = async function(e) {
-    e.preventDefault();
-    if (!db) return alert("Database not connected. Check Firebase Config.");
+// =========================================================================
+// INTERACTION STRUCTURAL HUD & SLIDER BEHAVIORS MODIFIERS
+// =========================================================================
+document.addEventListener("DOMContentLoaded", () => {
+    const menuBtn = document.getElementById("menuBtn");
+    const mobileMenu = document.getElementById("mobileMenu");
+    const loader = document.getElementById("loader");
+    const progressBar = document.getElementById("progressBar");
+    const scrollTopBtn = document.getElementById("scrollTop");
 
-    const form = e.target;
-    const name = form.name.value;
-    const email = form.email.value;
-    const phone = form.phone.value;
-    const message = form.message.value;
+    // Close Mobile Menu overlay if navigation target choice occurs
+    mobileMenu.querySelectorAll("a").forEach(link => {
+        link.addEventListener("click", () => mobileMenu.classList.remove("show"));
+    });
 
-    const btn = form.querySelector('button');
-    const originalText = btn.innerText;
-    btn.innerText = "Sending...";
-
-    try {
-        await addDoc(collection(db, "contact_submissions"), {
-            name, email, phone, message,
-            status: "NEW",
-            timestamp: serverTimestamp()
+    if (menuBtn && mobileMenu) {
+        menuBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            mobileMenu.classList.toggle("show");
         });
-        alert("Your request has been submitted successfully!");
-        form.reset();
-    } catch (error) {
-        console.error("Firebase Write Error:", error);
-        alert("Error submitting. Please check your Firestore Database Rules.");
-    } finally {
-        btn.innerText = originalText;
+        document.addEventListener("click", () => mobileMenu.classList.remove("show"));
     }
-};
 
-window.loadPublicLeads = async function() {
-    const grid = document.getElementById('public-leads-grid');
-    if (!db) { grid.innerHTML = '<div style="grid-column:1/-1;">Database error. Check Firebase Config.</div>'; return; }
-
-    grid.innerHTML = '<div style="grid-column:1/-1; text-align:center;">Loading active leads...</div>';
-
-    try {
-        const snap = await getDocs(collection(db, "published_leads"));
-        allPublishedLeads = [];
-        
-        snap.forEach(doc => {
-            allPublishedLeads.push(doc.data());
-        });
-        
-        window.filterPublicLeads(); // Render leads immediately using default filters
-        
-    } catch (e) {
-        console.error("Firestore Read Error:", e);
-        grid.innerHTML = '<div style="grid-column: 1/-1; text-align:center; color:red;">Error loading leads. Check Firestore Rules.</div>';
+    // Micro Operational Loader Timeout Simulation Control Link
+    if (loader) {
+        setTimeout(() => {
+            loader.style.opacity = "0";
+            setTimeout(() => loader.style.display = "none", 500);
+        }, 1000);
     }
-};
 
-// Handle Category Pill Clicks
-window.setLeadFilter = function(category) {
-    currentCategoryFilter = category;
-    
-    // Update active pill UI
-    document.querySelectorAll('.filter-pill').forEach(btn => {
-        if(btn.innerText === category) {
-            btn.classList.add('active');
+    // Navigation and Scrolling Metrics Dynamic Tracker UI updates
+    window.addEventListener("scroll", () => {
+        if (window.scrollY > 40) {
+            document.getElementById("main-header")?.classList.add("sticky");
         } else {
-            btn.classList.remove('active');
+            document.getElementById("main-header")?.classList.remove("sticky");
+        }
+
+        let scrollRatioPercentage = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
+        if (progressBar) progressBar.style.width = scrollRatioPercentage + "%";
+
+        if (window.scrollY > 300) {
+            scrollTopBtn?.classList.add("active");
+        } else {
+            scrollTopBtn?.classList.remove("active");
         }
     });
+
+    scrollTopBtn?.addEventListener("click", () => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
+    // Onboarding Accordion Structural Actions Engine mapping loop
+    document.querySelectorAll(".faq-question").forEach(item => {
+        item.addEventListener("click", () => {
+            item.parentElement?.classList.toggle("active");
+        });
+    });
+
+    // Compile Static Elements data tracks arrays mapping
+    renderTestimonialsTrackSystem();
+    observeAuthStateStatusTracking();
+});
+
+// =========================================================================
+// REAL-TIME FIRESTORE RECEPTION PIPELINES & CARDS RENDERING LOGIC
+// =========================================================================
+function initializeRealtimePublicLeadsStream() {
+    const publicLeadsCollectionReference = collection(db, "leads");
     
-    window.filterPublicLeads();
+    onSnapshot(publicLeadsCollectionReference, (querySnapshot) => {
+        publicLeadsTrackingArray = [];
+        querySnapshot.forEach((documentObject) => {
+            publicLeadsTrackingArray.push({ id: documentObject.id, ...documentObject.data() });
+        });
+        renderPublicLeadsGridMatrix();
+    }, (error) => {
+        console.error("Critical Fault Intaking Live Leads Array Block Pipeline Hook: ", error);
+    });
 }
 
-// Filter and Render Leads
-window.filterPublicLeads = function() {
-    const grid = document.getElementById('public-leads-grid');
-    const searchTerm = document.getElementById('lead-search-input').value.toLowerCase();
-    
-    let filteredLeads = allPublishedLeads.filter(lead => {
-        // Match Category
-        const matchesCategory = currentCategoryFilter === 'All' || lead.category === currentCategoryFilter;
-        // Match Search term
-        const matchesSearch = lead.title.toLowerCase().includes(searchTerm) || lead.description.toLowerCase().includes(searchTerm) || lead.category.toLowerCase().includes(searchTerm);
-        
-        return matchesCategory && matchesSearch;
+window.setLeadFilter = function(categoryTag) {
+    currentFilterCategory = categoryTag;
+    document.querySelectorAll("#categoryFilterContainer .filter-pill").forEach(pill => {
+        pill.classList.remove("active");
+        if(pill.getAttribute("onclick").includes(`'${categoryTag}'`)) {
+            pill.classList.add("active");
+        }
     });
-    
-    // Update the Summary Text
-    const summary = document.getElementById('lead-results-summary');
-    if(summary) {
-        summary.innerText = currentCategoryFilter === 'All' 
-            ? `Showing ${filteredLeads.length} total leads` 
-            : `Showing ${filteredLeads.length} leads in ${currentCategoryFilter}`;
-    }
+    renderPublicLeadsGridMatrix();
+};
 
-    if (filteredLeads.length === 0) {
-        grid.innerHTML = '<div style="grid-column: 1/-1; text-align:center;">No leads match your criteria.</div>';
+function renderPublicLeadsGridMatrix() {
+    const leadsViewportGridTarget = document.getElementById("publicLeadsGrid");
+    if (!leadsViewportGridTarget) return;
+
+    const targetedFilteredDataPool = currentFilterCategory === 'all' 
+        ? publicLeadsTrackingArray 
+        : publicLeadsTrackingArray.filter(lead => lead.category?.toLowerCase() === currentFilterCategory.toLowerCase());
+
+    if (targetedFilteredDataPool.length === 0) {
+        leadsViewportGridTarget.innerHTML = `
+            <div style="grid-column: 1/-1; text-align: center; padding: 60px; color: #64748b;">
+                <i class="fa-solid fa-folder-open" style="font-size: 44px; color: #cbd5e1; margin-bottom: 15px;"></i>
+                <p>No active verified lead sets currently match the selected industry segment.</p>
+            </div>`;
         return;
     }
 
-    let html = '';
-    filteredLeads.forEach(data => {
-        // Assign icon based on category
-        let iconClass = "fa-briefcase";
-        if (data.category === "Insurance") iconClass = "fa-shield-halved";
-        if (data.category === "Finance") iconClass = "fa-dollar-sign";
-        if (data.category === "Legal") iconClass = "fa-scale-balanced";
-        if (data.category === "Healthcare") iconClass = "fa-heart-pulse";
-        if (data.category === "RenewableEnergy") iconClass = "fa-leaf";
-        if (data.category === "IT") iconClass = "fa-laptop-code";
+    leadsViewportGridTarget.innerHTML = targetedFilteredDataPool.map(lead => `
+        <div class="lead-card">
+            <span class="lead-badge badge-${lead.category?.toLowerCase() || 'default'}">${lead.category || 'General Data Node'}</span>
+            <h3>${lead.title || 'Premium Leads Batch'}</h3>
+            <p>${lead.description || 'Verified prospects details mapping target profiles matching explicit specifications.'}</p>
+            <div class="lead-meta">
+                <span><i class="fa-solid fa-location-dot"></i> ${lead.location || 'United States'}</span>
+                <span style="font-weight: 700; color: #143d73;">${lead.price || 'Pricing Matrix Inquire'}</span>
+            </div>
+            <button class="lead-action-btn" onclick="window.navigate('contact-view')">Acquire Active Lead Set</button>
+        </div>
+    `).join('');
+}
+
+// =========================================================================
+// INBOUND PUBLIC REQUEST INTERFACE FORM CAPTURE SYSTEM
+// =========================================================================
+const publicInboundContactFormTarget = document.getElementById("publicContactForm");
+if (publicInboundContactFormTarget) {
+    publicInboundContactFormTarget.addEventListener("submit", async (event) => {
+        event.preventDefault();
         
-        html += `
-            <div class="lead-card-new">
-                <div class="lead-icon"><i class="fa-solid ${iconClass}"></i></div>
-                <div class="lead-details" style="flex: 1;">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 5px;">
-                        <h4>${data.title}</h4>
-                        <span class="badge badge-light-blue" style="background:#e0f2fe; color:#0f2f63;">${data.category}</span>
-                    </div>
-                    <p>${data.description}</p>
-                    <button class="btn-view" onclick="window.navigate('contact-view')">View Details →</button>
-                </div>
+        const pipelinePayloadDataBlock = {
+            name: document.getElementById("contact-name").value.trim(),
+            email: document.getElementById("contact-email").value.trim(),
+            phone: document.getElementById("contact-phone").value.trim(),
+            message: document.getElementById("contact-message").value.trim(),
+            status: "unassigned",
+            timestamp: serverTimestamp()
+        };
+
+        try {
+            await addDoc(collection(db, "submissions"), pipelinePayloadDataBlock);
+            alert("Security transmission verified. Your operational inquiry parameters have been logged.");
+            publicInboundContactFormTarget.reset();
+        } catch (faultExceptionError) {
+            console.error("Critical Fault Dispatching Inbound Inquiries Payload Structural Object: ", faultExceptionError);
+            alert("Pipeline Connection Reset Fault. Verify network operational paths.");
+        }
+    });
+}
+
+// =========================================================================
+// ADMINISTRATIVE GATEKEEPER ACCOUNT AUTHENTICATION SUB-SYSTEM
+// =========================================================================
+const adminPortalLoginFormTarget = document.getElementById("adminLoginForm");
+if (adminPortalLoginFormTarget) {
+    adminPortalLoginFormTarget.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const authorizationEmailToken = document.getElementById("login-email").value.trim();
+        const securitySecretKeyToken = document.getElementById("login-password").value.trim();
+
+        try {
+            await signInWithEmailAndPassword(auth, authorizationEmailToken, securitySecretKeyToken);
+            adminPortalLoginFormTarget.reset();
+            window.navigate("admin-dashboard-view");
+        } catch (authenticationExceptionError) {
+            console.error("Portal Authentication Crypt Refusal Countered: ", authenticationExceptionError);
+            alert("Security Authentication Access Violation: Invalid identity signature keys parameters.");
+        }
+    });
+}
+
+const portalLogoutTriggerActionNode = document.getElementById("adminLogoutBtn");
+if (portalLogoutTriggerActionNode) {
+    portalLogoutTriggerActionNode.addEventListener("click", async () => {
+        try {
+            await signOut(auth);
+            window.navigate("home-view");
+        } catch (logoutFaultException) {
+            console.error("Logout System Session Token Invalidation Error Event: ", logoutFaultException);
+        }
+    });
+}
+
+function observeAuthStateStatusTracking() {
+    onAuthStateChanged(auth, (authenticatedUserNode) => {
+        if (authenticatedUserNode) {
+            console.log("Admin Identity Cleared: Authenticated Active Token Context Session Established.");
+        } else {
+            console.log("Context Security Warning: Session Active Context State Unsigned Root Level.");
+        }
+    });
+}
+
+// =========================================================================
+// CRM MAIN DATA MANAGEMENT CONSOLE HUB VISUAL CONTROLLERS
+// =========================================================================
+window.switchAdminTab = function(targetTabContentId) {
+    document.querySelectorAll(".crm-item").forEach(item => item.classList.remove("active"));
+    document.querySelectorAll(".crm-tab-content").forEach(contentBlock => contentBlock.classList.remove("active"));
+
+    const associatedMenuSelectionPill = document.querySelector(`.crm-item[data-tab="${targetTabContentId}"]`);
+    if (associatedMenuSelectionPill) associatedMenuSelectionPill.classList.add("active");
+
+    const targetedTabContainerView = document.getElementById(targetTabContentId);
+    if (targetedTabContainerView) targetedTabContainerView.classList.add("active");
+};
+
+function loadAdminDashboardData() {
+    // Realtime Hooks initialization loop vectors for Dashboard Tabs Matrices
+    onSnapshot(collection(db, "leads"), (querySnapshot) => {
+        let leadsRecordsArray = [];
+        querySnapshot.forEach(docObj => leadsRecordsArray.push({ id: docObj.id, ...docObj.data() }));
+        
+        populateAdminLeadsInventoryInterface(leadsRecordsArray);
+        compileDashboardMetricTrackCards(leadsRecordsArray, null);
+    });
+
+    onSnapshot(collection(db, "submissions"), (querySnapshot) => {
+        let submissionsRecordsArray = [];
+        querySnapshot.forEach(docObj => submissionsRecordsArray.push({ id: docObj.id, ...docObj.data() }));
+        
+        populateAdminInboundSubmissionsLogView(submissionsRecordsArray);
+        renderKanbanPipelineControlBoard(submissionsRecordsArray);
+        compileDashboardMetricTrackCards(null, submissionsRecordsArray);
+    });
+}
+
+// Metric Compilation calculations mapping node updates
+let historicalLeadsCounterCache = 0;
+let historicalSubmissionsCounterCache = 0;
+
+function compileDashboardMetricTrackCards(leadsBatchArray, submissionsBatchArray) {
+    if (leadsBatchArray) historicalLeadsCounterCache = leadsBatchArray.length;
+    if (submissionsBatchArray) historicalSubmissionsCounterCache = submissionsBatchArray.length;
+
+    const statTotalLeadsNode = document.getElementById("stat-total-leads");
+    const statPublishedLeadsNode = document.getElementById("stat-published-leads");
+    const statTotalSubmissionsNode = document.getElementById("stat-total-submissions");
+    const statConversionRateNode = document.getElementById("stat-conversion-rate");
+
+    if (statTotalLeadsNode) statTotalLeadsNode.innerText = historicalLeadsCounterCache;
+    if (statPublishedLeadsNode) statPublishedLeadsNode.innerText = historicalLeadsCounterCache;
+    if (statTotalSubmissionsNode) statTotalSubmissionsNode.innerText = historicalSubmissionsCounterCache;
+    
+    if (statConversionRateNode && historicalLeadsCounterCache > 0) {
+        let calculatedRatioMetric = Math.round((historicalSubmissionsCounterCache / historicalLeadsCounterCache) * 100);
+        statConversionRateNode.innerText = `${calculatedRatioMetric}%`;
+    }
+}
+
+function populateAdminLeadsInventoryInterface(leadsDataPool) {
+    const targetTableContainerBodyNode = document.getElementById("adminLeadsTableBody");
+    if (!targetTableContainerBodyNode) return;
+
+    if (leadsDataPool.length === 0) {
+        targetTableContainerBodyNode.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 30px; color: #94a3b8;">No lead parameters records allocated within the database space.</td></tr>`;
+        return;
+    }
+
+    targetTableContainerBodyNode.innerHTML = leadsDataPool.map(lead => `
+        <tr>
+            <td style="font-weight: 600; color: #1e293b;">${lead.title || 'Unnamed Record Node'}</td>
+            <td><span class="lead-badge badge-${lead.category?.toLowerCase() || 'default'}" style="margin:0;">${lead.category || 'General'}</span></td>
+            <td>${lead.location || 'Global Bound Routing'}</td>
+            <td style="font-weight:700; color: #1e293b;">${lead.price || 'TBD'}</td>
+            <td><span class="status-pill status-active">Active Stream</span></td>
+            <td>
+                <button class="action-icon-btn btn-delete" onclick="deleteLeadRecordStructure('${lead.id}')" title="Delete Permanent Node"><i class="fa-solid fa-trash-can"></i></button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function populateAdminInboundSubmissionsLogView(submissionsDataPool) {
+    const targetSubmissionsTableBodyNode = document.getElementById("adminSubmissionsTableBody");
+    if (!targetSubmissionsTableBodyNode) return;
+
+    if (submissionsDataPool.length === 0) {
+        targetSubmissionsTableBodyNode.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 30px; color: #94a3b8;">Queue clean. No pending user input payloads detected inside active threads.</td></tr>`;
+        return;
+    }
+
+    targetSubmissionsTableBodyNode.innerHTML = submissionsDataPool.map(submission => {
+        let parsingTimestampString = submission.timestamp?.toDate ? submission.timestamp.toDate().toLocaleString() : "Realtime Sync Tracking Process";
+        return `
+            <tr>
+                <td style="font-weight: 600; color: #1e293b;">${submission.name || 'Anonymous Prospect'}</td>
+                <td><a href="mailto:${submission.email}" style="color: #184e92; text-decoration:none;">${submission.email || 'N/A'}</a></td>
+                <td>${submission.phone || 'N/A'}</td>
+                <td style="max-width: 300px; white-space: nowrap; overflow: hidden; text-transform: ellipsis;" title="${submission.message}">${submission.message || 'No structural context message block specified.'}</td>
+                <td style="font-size: 12px; color: #64748b;">${parsingTimestampString}</td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// =========================================================================
+// PIPELINE MONITOR KANBAN CONTROLLER VISUAL STRUCTURAL MAPPING DATA
+// =========================================================================
+function renderKanbanPipelineControlBoard(submissionsDataPool) {
+    const columnsPipelinesSelectorsMappingNodes = {
+        unassigned: document.getElementById("kanban-unassigned"),
+        processing: document.getElementById("kanban-processing"),
+        won: document.getElementById("kanban-won")
+    };
+
+    const countLabelsSelectorsMappingNodes = {
+        unassigned: document.getElementById("count-unassigned"),
+        processing: document.getElementById("count-processing"),
+        won: document.getElementById("count-won")
+    };
+
+    // Diagnostics clearing loops vectors
+    Object.values(columnsPipelinesSelectorsMappingNodes).forEach(column => { if (column) column.innerHTML = ""; });
+    Object.values(countLabelsSelectorsMappingNodes).forEach(label => { if (label) label.innerText = "0"; });
+
+    let pipelinesCountersDistributionObjects = { unassigned: 0, processing: 0, won: 0 };
+
+    submissionsDataPool.forEach(taskItem => {
+        let taskStateAllocationFlag = taskItem.status || "unassigned";
+        if (!columnsPipelinesSelectorsMappingNodes[taskStateAllocationFlag]) taskStateAllocationFlag = "unassigned";
+
+        pipelinesCountersDistributionObjects[taskStateAllocationFlag]++;
+        
+        const cardStructuralNodeBuilder = document.createElement("div");
+        cardStructuralNodeBuilder.className = "kanban-card";
+        cardStructuralNodeBuilder.innerHTML = `
+            <h3>${taskItem.name || 'Prospect Client'}</h3>
+            <p>${taskItem.message || 'No parameters requirements detailed context.'}</p>
+            <div class="kanban-card-footer">
+                <span><i class="fa-solid fa-phone" style="margin-right:4px;"></i>${taskItem.phone || 'No Contact Data'}</span>
+                <select onchange="updatePipelineNodeRouteState('${taskItem.id}', this.value)" style="padding: 4px; font-size: 11px; border-radius: 6px; background:#f8fafc; color:#334155; border:1px solid #cbd5e1;">
+                    <option value="unassigned" ${taskStateAllocationFlag === 'unassigned' ? 'selected' : ''}>Node New</option>
+                    <option value="processing" ${taskStateAllocationFlag === 'processing' ? 'selected' : ''}>Processing</option>
+                    <option value="won" ${taskStateAllocationFlag === 'won' ? 'selected' : ''}>Authorized</option>
+                </select>
             </div>
         `;
+        columnsPipelinesSelectorsMappingNodes[taskStateAllocationFlag]?.appendChild(cardStructuralNodeBuilder);
     });
-    grid.innerHTML = html;
+
+    Object.keys(countLabelsSelectorsMappingNodes).forEach(key => {
+        if (countLabelsSelectorsMappingNodes[key]) countLabelsSelectorsMappingNodes[key].innerText = pipelinesCountersDistributionObjects[key];
+    });
 }
 
-// ==========================================
-// 4. ADMIN AUTHENTICATION
-// ==========================================
-window.checkLogin = function(e) {
-    e.preventDefault();
-    const email = document.getElementById("admin-email").value;
-    const pass = document.getElementById("admin-password").value;
+// =========================================================================
+// ACTION LIFECYCLE MODAL CONTROL STRATEGIES & RECORD MUTATION OPERATIONS
+// =========================================================================
+window.openAddLeadModal = function() {
+    document.getElementById("addLeadModalOverlay")?.classList.add("show");
+};
 
-    if (email === "admin@gmail.com" && pass === "1234") {
-        sessionStorage.setItem('adminAuth', 'true');
-        document.getElementById("admin-password").value = '';
-        window.navigate('admin-dashboard-view');
-    } else {
-        alert("Invalid Credentials");
+window.closeAddLeadModal = function() {
+    document.getElementById("addLeadModalOverlay")?.classList.remove("show");
+};
+
+const crmLeadAdditionExecutionFormTarget = document.getElementById("addLeadForm");
+if (crmLeadAdditionExecutionFormTarget) {
+    crmLeadAdditionExecutionFormTarget.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const customLeadStructuralDocBlockInstance = {
+            title: document.getElementById("modal-title").value.trim(),
+            category: document.getElementById("modal-category").value,
+            location: document.getElementById("modal-location").value.trim(),
+            price: document.getElementById("modal-price").value.trim(),
+            description: document.getElementById("modal-desc").value.trim(),
+            timestamp: serverTimestamp()
+        };
+
+        try {
+            await addDoc(collection(db, "leads"), customLeadStructuralDocBlockInstance);
+            alert("Database Mutation Verified: Target Lead Array injected cleanly.");
+            crmLeadAdditionExecutionFormTarget.reset();
+            closeAddLeadModal();
+        } catch (insertionFaultException) {
+            console.error("Critical Failure Injecting Structural Document Record Instance Block: ", insertionFaultException);
+            alert("Security Ledger Refusal Error Encountered. Verify access authority tokens parameters context.");
+        }
+    });
+}
+
+window.deleteLeadRecordStructure = async function(documentRecordIdentifierKey) {
+    if (!confirm("Are you sure you want to permanently delete this lead record?")) return;
+    try {
+        await deleteDoc(doc(db, "leads", documentRecordIdentifierKey));
+        alert("Lead record deleted successfully.");
+    } catch (deletionExceptionError) {
+        console.error("Critical Failure Processing Target Record Set Erasure Sequence: ", deletionExceptionError);
     }
 };
 
-window.logout = function() {
-    sessionStorage.removeItem('adminAuth');
-    window.navigate('admin-login-view');
-};
-
-// ==========================================
-// 5. CRM PANEL ROUTING & LOGIC
-// ==========================================
-window.switchAdminTab = function(tabName) {
-    document.querySelectorAll('.crm-sidebar a').forEach(a => a.classList.remove('active'));
-    document.getElementById(`nav-${tabName}`).classList.add('active');
-
-    const tabs = ['dash', 'leads', 'users', 'contactforms', 'reports'];
-    tabs.forEach(t => document.getElementById(`tab-${t}`).classList.add('hidden'));
-    document.getElementById(`tab-${tabName}`).classList.remove('hidden');
-
-    if(tabName === 'dash') loadAdminDash();
-    if(tabName === 'leads') loadAdminLeads();
-    if(tabName === 'contactforms' || tabName === 'users') loadContactFormsAndKanban();
-    if(tabName === 'reports') loadAdminReports();
-};
-
-window.openAddLeadModal = () => document.getElementById('add-lead-modal').classList.remove('hidden');
-
-// --- Tab 1: Dashboard Data ---
-async function loadAdminDash() {
-    if(!db) return;
+window.updatePipelineNodeRouteState = async function(documentRecordIdentifierKey, targetStateTransitionToken) {
     try {
-        const snap = await getDocs(collection(db, "published_leads"));
-        document.getElementById('dash-total').innerText = snap.size;
-        document.getElementById('dash-active').innerText = snap.size; 
-        document.getElementById('dash-new').innerText = 0; 
-    } catch(e) { console.error(e); }
-}
-
-// --- Tab 2: Leads (Published) ---
-window.submitNewLead = async function(e) {
-    e.preventDefault();
-    const title = document.getElementById('modal-title').value;
-    const cat = document.getElementById('modal-cat').value;
-    const desc = document.getElementById('modal-desc').value;
-
-    try {
-        await addDoc(collection(db, "published_leads"), {
-            title, category: cat, description: desc, status: "Active", timestamp: serverTimestamp()
-        });
-        document.getElementById('add-lead-modal').classList.add('hidden');
-        e.target.reset();
-        loadAdminLeads();
-        loadAdminDash();
-    } catch (err) { console.error(err); alert("Error adding lead."); }
-};
-
-window.deletePublishedLead = async function(id) {
-    if(!confirm("Delete this lead?")) return;
-    await deleteDoc(doc(db, "published_leads", id));
-    loadAdminLeads();
-};
-
-async function loadAdminLeads() {
-    if(!db) return;
-    const tbody = document.getElementById('admin-published-leads-table');
-    tbody.innerHTML = '<tr><td colspan="4">Loading...</td></tr>';
-    
-    try {
-        const snap = await getDocs(collection(db, "published_leads"));
-        document.getElementById('leads-tab-total-btn').innerText = `Total Leads: ${snap.size}`;
-        let html = '';
-        snap.forEach(d => {
-            const data = d.data();
-            const badgeColor = data.category === 'Finance' ? 'badge-light-blue' : (data.category==='B2B'?'badge-light-purple':'badge-light-green');
-            
-            html += `
-            <tr>
-                <td style="font-weight:600;">${data.title}</td>
-                <td><span class="badge ${badgeColor}">${data.category}</span></td>
-                <td><span class="badge badge-light-green">Active</span></td>
-                <td>
-                    <button class="btn-sm bg-red" onclick="window.deletePublishedLead('${d.id}')">Delete</button>
-                </td>
-            </tr>`;
-        });
-        tbody.innerHTML = html || '<tr><td colspan="4">No leads published.</td></tr>';
-    } catch(e) { console.error(e); tbody.innerHTML = '<tr><td colspan="4" style="color:red;">Error loading leads. Check Firestore Rules.</td></tr>'; }
-}
-
-// --- Tab 3 & 4: Users (Kanban) & Contact Forms ---
-window.updateContactStatus = async function(id, newStatus) {
-    await updateDoc(doc(db, "contact_submissions", id), { status: newStatus });
-    loadContactFormsAndKanban();
-};
-
-window.deleteContactForm = async function(id) {
-    if(!confirm("Delete submission?")) return;
-    await deleteDoc(doc(db, "contact_submissions", id));
-    loadContactFormsAndKanban();
-};
-
-async function loadContactFormsAndKanban() {
-    if(!db) return;
-    const tbody = document.getElementById('admin-contact-forms-table');
-    const kb = { NEW: '', CONTACTED: '', IN_PROGRESS: '', CONVERTED: '', LOST: '' };
-
-    try {
-        const snap = await getDocs(collection(db, "contact_submissions"));
-        let tableHtml = '';
-
-        snap.forEach(d => {
-            const data = d.data();
-            const id = d.id;
-            const s = data.status || "NEW";
-            
-            let sBadge = s === 'NEW' ? 'badge-light-blue' : s === 'CONTACTED' ? 'badge-light-yellow' : s === 'IN_PROGRESS' ? 'badge-light-purple' : 'badge-light-green';
-            if(s==='LOST') sBadge = 'badge-light-red';
-
-            tableHtml += `
-            <tr>
-                <td style="font-weight:500;">${data.name}</td>
-                <td>${data.email}</td>
-                <td>${data.phone}</td>
-                <td><div style="max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${data.message}</div></td>
-                <td><span class="badge ${sBadge}">${s}</span></td>
-                <td style="min-width: 250px;">
-                    <button class="btn-sm bg-blue" onclick="window.updateContactStatus('${id}','CONTACTED')">Contact</button>
-                    <button class="btn-sm bg-purple" onclick="window.updateContactStatus('${id}','IN_PROGRESS')">Progress</button>
-                    <button class="btn-sm bg-green" onclick="window.updateContactStatus('${id}','CONVERTED')">Convert</button>
-                    <button class="btn-sm bg-red" onclick="window.updateContactStatus('${id}','LOST')">Lost</button>
-                </td>
-            </tr>`;
-
-            if(kb[s] !== undefined) {
-                kb[s] += `<div class="kanban-card">${data.name}</div>`;
-            } else {
-                kb['NEW'] += `<div class="kanban-card">${data.name}</div>`; 
-            }
-        });
-
-        tbody.innerHTML = tableHtml || '<tr><td colspan="6">No form submissions yet.</td></tr>';
-        
-        document.getElementById('kb-new').innerHTML = kb.NEW || '<div style="color:#94a3b8; font-size:12px; text-align:center;">No Leads</div>';
-        document.getElementById('kb-contacted').innerHTML = kb.CONTACTED || '<div style="color:#94a3b8; font-size:12px; text-align:center;">No Leads</div>';
-        document.getElementById('kb-inprogress').innerHTML = kb.IN_PROGRESS || '<div style="color:#94a3b8; font-size:12px; text-align:center;">No Leads</div>';
-        document.getElementById('kb-converted').innerHTML = kb.CONVERTED || '<div style="color:#94a3b8; font-size:12px; text-align:center;">No Leads</div>';
-        document.getElementById('kb-lost').innerHTML = kb.LOST || '<div style="color:#94a3b8; font-size:12px; text-align:center;">No Leads</div>';
-
-    } catch (e) {
-        console.error(e);
-        tbody.innerHTML = '<tr><td colspan="6" style="color:red;">Error loading data. Check Firestore Rules.</td></tr>';
+        const structuralTargetDocumentReference = doc(db, "submissions", documentRecordIdentifierKey);
+        await updateDoc(structuralTargetDocumentReference, { status: targetStateTransitionToken });
+        console.log(`State Route Mutation Successfully Committed to Firebase Pipeline: Node ID [${documentRecordIdentifierKey}] State -> ${targetStateTransitionToken}`);
+    } catch (pipelineMutationFaultException) {
+        console.error("Critical Mutation Refusal Intercepted from Database Engine System Loop: ", pipelineMutationFaultException);
     }
-}
+};
 
-// --- Tab 5: Reports ---
-async function loadAdminReports() {
-    if(!db) return;
-    try {
-        const snap = await getDocs(collection(db, "contact_submissions"));
-        let active = 0, lost = 0, total = snap.size;
-        
-        snap.forEach(d => {
-            const s = d.data().status;
-            if(s === 'LOST') lost++;
-            else active++; 
-        });
+// =========================================================================
+// CORE HARDCODED COMPREHENSIVE DATA TRACK RENDERING UTILITIES
+// =========================================================================
+function renderTestimonialsTrackSystem() {
+    const dynamicTestimonialTrackTargetNode = document.getElementById("testimonialTrack");
+    if (!dynamicTestimonialTrackTargetNode) return;
 
-        document.getElementById('rep-total').innerText = total;
-        document.getElementById('rep-active').innerText = active;
-        document.getElementById('rep-inactive').innerText = lost;
+    const historicalOnboardedProfilesLedger = [
+        { message: "QFY Leads helped us reach highly targeted insurance, medical, and telecom clients with excellent accuracy and compliance.", name: "Murtaza Siyahi", role: "Business Owner, Tasaif LLC", location: "Wyoming, United States" },
+        { message: "The quality of leads provided helped our funding campaigns perform better. Strong understanding of financial services.", name: "Bryan J Duelley", role: "Owner, MY Company Funding LLC", location: "Texas, United States" },
+        { message: "QFY Leads supported our expansion across medical and legal translation services with relevant and well-targeted leads.", name: "Yoni Ohayon", role: "CEO, eTranslationServices.com", location: "United States" },
+        { message: "Consistent lead delivery and strong campaign understanding helped scale our healthcare-focused call center operations.", name: "William Marroquin", role: "CEO, HealthBrokersPro", location: "California, United States" },
+        { message: "Their intent-based targeting helped accelerate conversions across finance and debt-related services.", name: "Alex Frias", role: "Investor & Entrepreneur, Hilldale Corp", location: "United States" },
+        { message: "Reliable healthcare leads suitable for telemarketing and online outreach. Smooth coordination throughout.", name: "Jonatan Arano", role: "General Manager, Trusted Medical Providers", location: "Los Angeles Metro Area" }
+    ];
 
-        setTimeout(() => {
-            document.getElementById('chart-total').style.height = total > 0 ? '100%' : '10%';
-            document.getElementById('chart-active').style.height = total > 0 ? `${(active/total)*100}%` : '10%';
-            document.getElementById('chart-inactive').style.height = total > 0 ? `${(lost/total)*100}%` : '10%';
-        }, 100);
+    dynamicTestimonialTrackTargetNode.innerHTML = historicalOnboardedProfilesLedger.map(profile => `
+        <div class="testimonial-card">
+            <div class="quote"><i class="fa-solid fa-quote-left"></i></div>
+            <div class="stars">★★★★★</div>
+            <p>${profile.message}</p>
+            <div class="client">
+                <h4>${profile.name}</h4>
+                <span>${profile.role}</span>
+                <small>${profile.location}</small>
+            </div>
+        </div>
+    `).join("");
 
-    } catch (e) { console.error(e); }
+    // Initialize Testimonials Carousel Execution Logic Track Loop Controllers Parameters
+    let visualActivePointerIndexValue = 0;
+    const clickNextActionControlTriggerNode = document.querySelector(".next");
+    const clickPrevActionControlTriggerNode = document.querySelector(".prev");
+    const baselineCardWidthBoundMetric = 405;
+
+    function transitionCarouselTrack() {
+        dynamicTestimonialTrackTargetNode.style.transform = `translateX(-${visualActivePointerIndexValue * baselineCardWidthBoundMetric}px)`;
+    }
+
+    clickNextActionControlTriggerNode?.addEventListener("click", () => {
+        visualActivePointerIndexValue = (visualActivePointerIndexValue < historicalOnboardedProfilesLedger.length - 1) ? visualActivePointerIndexValue + 1 : 0;
+        transitionCarouselTrack();
+    });
+
+    clickPrevActionControlTriggerNode?.addEventListener("click", () => {
+        visualActivePointerIndexValue = (visualActivePointerIndexValue > 0) ? visualActivePointerIndexValue - 1 : historicalOnboardedProfilesLedger.length - 1;
+        transitionCarouselTrack();
+    });
+
+    setInterval(() => {
+        visualActivePointerIndexValue = (visualActivePointerIndexValue + 1) % historicalOnboardedProfilesLedger.length;
+        transitionCarouselTrack();
+    }, 4000);
 }
