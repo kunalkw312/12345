@@ -863,7 +863,7 @@
         /*=====================================
         UTILITIES & ANIMATIONS
         =====================================*/
-        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #123f7a; display: flex; justify-content: center; align-items: center; z-index: 999999; transition: .6s; }
+        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #123f7a; display: flex; justify-content: center; align-items: center; z-index: 999999; transition: .4s; }
         .loader-circle { width: 80px; height: 80px; border: 8px solid rgba(255, 255, 255, .2); border-top: 8px solid white; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
@@ -1090,7 +1090,7 @@
     </div>
 
     <div id="contact-view" class="page-view">
-        <section class="contact">
+        <section class="contact" style="width: 100%;">
             <div class="contact-wrapper">
                 <div class="contact-info">
                     <h2>Unlock High-Converting Verified Leads</h2>
@@ -1115,7 +1115,7 @@
     </div>
 
     <div id="admin-login-view" class="page-view">
-        <div class="auth-container">
+        <div class="auth-container" style="width: 100%;">
             <div class="auth-card">
                 <h2>Access Control Portal</h2>
                 <p>Provide secure credential parameters to initialize administrator tokens.</p>
@@ -1143,7 +1143,6 @@
                     <div class="crm-item" data-tab="tab-leads" onclick="switchAdminTab('tab-leads')"><i class="fa-solid fa-database"></i> Live Leads Hub</div>
                     <div class="crm-item" data-tab="tab-users" onclick="switchAdminTab('tab-users')"><i class="fa-solid fa-network-wired"></i> Conversion Pipeline</div>
                     <div class="crm-item" data-tab="tab-submissions" onclick="switchAdminTab('tab-submissions')"><i class="fa-solid fa-envelope-open-text"></i> Forms Queue</div>
-                    <div class="crm-item" data-tab="tab-reports" onclick="switchAdminTab('tab-reports')"><i class="fa-solid fa-file-invoice-dollar"></i> Report Analytics</div>
                 </nav>
                 <div class="crm-item crm-logout-btn" id="adminLogoutBtn"><i class="fa-solid fa-power-off"></i> Exit Admin Token</div>
             </aside>
@@ -1240,55 +1239,42 @@
                     </div>
                 </div>
 
-                <div id="tab-reports" class="crm-tab-content">
-                    <div class="crm-header">
-                        <div class="crm-title">
-                            <h1>Analytics & Ledger Compiling System</h1>
-                            <p>Compile analytical profiles, export billing statements, and check system performance matrix loops.</p>
-                        </div>
-                    </div>
-                    <div style="background: white; padding: 40px; border-radius: 16px; border: 1px solid #eef2f7; text-align: center; color: #64748b;">
-                        <i class="fa-solid fa-chart-line" style="font-size: 48px; color: #184e92; margin-bottom: 20px;"></i>
-                        <p>Advanced system reports tracking performance metrics loops are being calculated by the background service engine.</p>
-                    </div>
-                </div>
-
             </main>
         </div>
     </div>
 
     <footer id="global-application-footer">
-        <div class="footer-grid">
+        <div class="section footer-grid" style="background:#0b2142; color:#fff; display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:40px; padding:60px 7%;">
             <div>
-                <h3>QFY Leads</h3>
-                <p>Premium Lead Generation Company helping businesses generate predictable revenue through high-converting verified leads.</p>
+                <h3 style="margin-bottom:15px; font-size:20px;">QFY Leads</h3>
+                <p style="font-size:14px; line-height:1.7; opacity:0.8;">Premium Lead Generation Company helping businesses generate predictable revenue through high-converting verified leads.</p>
             </div>
             <div>
-                <h3>Quick Links</h3>
-                <a onclick="window.navigate('home-view')">Home</a>
-                <a onclick="window.navigate('public-leads-view')">About</a>
-                <a onclick="window.navigate('service-view')">Services</a>
-                <a onclick="window.navigate('admin-login-view')">Admin CRM</a>
+                <h3 style="margin-bottom:15px; font-size:18px;">Quick Links</h3>
+                <a onclick="window.navigate('home-view')" style="display:block; color:#fff; text-decoration:none; margin-bottom:10px; font-size:14px; cursor:pointer; opacity:0.8;">Home</a>
+                <a onclick="window.navigate('about-view')" style="display:block; color:#fff; text-decoration:none; margin-bottom:10px; font-size:14px; cursor:pointer; opacity:0.8;">About</a>
+                <a onclick="window.navigate('service-view')" style="display:block; color:#fff; text-decoration:none; margin-bottom:10px; font-size:14px; cursor:pointer; opacity:0.8;">Services</a>
+                <a onclick="window.navigate('admin-login-view')" style="display:block; color:#fff; text-decoration:none; font-size:14px; cursor:pointer; opacity:0.8;">Admin CRM</a>
             </div>
             <div>
-                <h3>Industries</h3>
-                <a onclick="window.navigate('public-leads-view')">Healthcare</a>
-                <a onclick="window.navigate('public-leads-view')">Insurance</a>
-                <a onclick="window.navigate('public-leads-view')">Finance</a>
-                <a onclick="window.navigate('public-leads-view')">Legal</a>
+                <h3 style="margin-bottom:15px; font-size:18px;">Industries</h3>
+                <a onclick="window.navigate('public-leads-view')" style="display:block; color:#fff; text-decoration:none; margin-bottom:10px; font-size:14px; cursor:pointer; opacity:0.8;">Healthcare</a>
+                <a onclick="window.navigate('public-leads-view')" style="display:block; color:#fff; text-decoration:none; margin-bottom:10px; font-size:14px; cursor:pointer; opacity:0.8;">Insurance</a>
+                <a onclick="window.navigate('public-leads-view')" style="display:block; color:#fff; text-decoration:none; margin-bottom:10px; font-size:14px; cursor:pointer; opacity:0.8;">Finance</a>
+                <a onclick="window.navigate('public-leads-view')" style="display:block; color:#fff; text-decoration:none; font-size:14px; cursor:pointer; opacity:0.8;">Legal</a>
             </div>
             <div>
-                <h3>Contact</h3>
-                <p>+91 9876543210</p>
-                <p>info@qfyleads.com</p>
-                <p>India</p>
+                <h3 style="margin-bottom:15px; font-size:18px;">Contact</h3>
+                <p style="font-size:14px; margin-bottom:8px; opacity:0.8;">+91 9876543210</p>
+                <p style="font-size:14px; margin-bottom:8px; opacity:0.8;">info@qfyleads.com</p>
+                <p style="font-size:14px; opacity:0.8;">India</p>
             </div>
         </div>
-        <div class="footer-bottom">© 2026 QFY Leads. All Rights Reserved. Custom Dashboard Stack Integrated Engine.</div>
+        <div style="background:#081832; color:#fff; text-align:center; padding:20px; font-size:13px; opacity:0.7;">© 2026 QFY Leads. All Rights Reserved. Custom Dashboard Stack Integrated Engine.</div>
     </footer>
 
     <div class="scrollTop" id="scrollTop"><i class="fa-solid fa-arrow-up"></i></div>
-    <a href="https://wa.me/918878787420?text=Hello%20QFY%20Leads,%0A%0AI%20am%20interested%20in%20your%20lead%20generation%20services.%20Please%20share%20more%20details.%20Thank%20you!" class="whatsapp" target="_blank" aria-label="Chat on WhatsApp">
+    <a href="https://wa.me/918878787420?text=Hello%20QFY%20Leads" class="whatsapp" target="_blank" aria-label="Chat on WhatsApp">
         <i class="fab fa-whatsapp"></i>
     </a>
 
@@ -1325,17 +1311,28 @@
                 </div>
                 <div class="form-group">
                     <label>Data Summary Structural Insights</label>
-                    <textarea id="modal-desc" rows="3" placeholder="Define targeting parameters, verification checkpoints, and compliance guidelines explicitly..." required></textarea>
+                    <textarea id="modal-desc" rows="3" placeholder="Define targeting parameters..." required></textarea>
                 </div>
                 <div class="modal-actions">
-                    <button type="button" class="btn-cancel" onclick="closeAddLeadModal()">Cancel Input Sequence</button>
+                    <button type="button" class="btn-cancel" onclick="closeAddLeadModal()">Cancel Input</button>
                     <button type="submit" class="btn-submit">Publish Live Array</button>
                 </div>
             </form>
         </div>
     </div>
 
+    <script>
+        window.addEventListener("load", function() {
+            setTimeout(function() {
+                var ldr = document.getElementById("loader");
+                if(ldr) {
+                    ldr.style.opacity = "0";
+                    setTimeout(function() { ldr.style.display = "none"; }, 400);
+                }
+            }, 800);
+        });
+    </script>
+
     <script type="module" src="app.js"></script>
 </body>
 </html>
-
