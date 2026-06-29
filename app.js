@@ -1,494 +1,467 @@
-// =========================================================================
-// ARCHITECTURE LOGIC STACK CORE MATRIX INFRASTRUCTURE INTERFACE
-// =========================================================================
+// app.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { 
-    getFirestore, collection, addDoc, getDocs, onSnapshot, doc, deleteDoc, updateDoc, serverTimestamp 
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { 
-    getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged 
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// CORE FIREBASE INFRASTRUCTURE DEFINITIONS
-const firebaseConfig = {
-    apiKey: "AIzaSyCuB2izaoYMfr-olS3ImYL7Vw1OqkhMR5U",
-    authDomain: "qfy-leads-59c25.firebaseapp.com",
-    databaseURL: "https://qfy-leads-59c25-default-rtdb.firebaseio.com",
-    projectId: "qfy-leads-59c25",
-    storageBucket: "qfy-leads-59c25.firebasestorage.app",
-    messagingSenderId: "873319787899",
-    appId: "1:873319787899:web:3285832f2b5cda967c21de",
-    measurementId: "G-PQ108NT0YX"
-};
+// ==========================================
+// 01. FIREBASE ARCHITECTURE SETUP
+// ==========================================
+let db = null;
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
+try {
+    const firebaseConfig = {
+        apiKey: "AIzaSyCuB2izaoYMfr-olS3ImYL7Vw1OqkhMR5U",
+        authDomain: "qfy-leads-59c25.firebaseapp.com",
+        databaseURL: "https://qfy-leads-59c25-default-rtdb.firebaseio.com",
+        projectId: "qfy-leads-59c25",
+        storageBucket: "qfy-leads-59c25.firebasestorage.app",
+        messagingSenderId: "873319787899",
+        appId: "1:873319787899:web:3285832f2b5cda967c21de",
+        measurementId: "G-PQ108NT0YX"
+    };
 
-// STATE REGISTRATION VARIABLES TRACK
-let currentFilterCategory = 'all';
-let publicLeadsTrackingArray = [];
+    const app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+} catch (error) {
+    console.error("Firebase Initialization Error: ", error);
+}
 
-// =========================================================================
-// APPLICATION COMPILER CONTROLLER SINGLE PAGE ROUTING ENGINE (SPA)
-// =========================================================================
-window.navigate = function(viewId) {
-    document.querySelectorAll('.page-view').forEach(view => {
-        view.classList.remove('active');
-    });
+// Global State Management
+let allPublishedLeads = [];
+let currentCategoryFilter = 'All';
 
-    const targetViewportNode = document.getElementById(viewId);
-    if (targetViewportNode) {
-        targetViewportNode.classList.add('active');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    const masterHeaderElement = document.getElementById('main-header');
-    const primaryAppFooterElement = document.getElementById('global-application-footer');
+// ==========================================
+// 02. CORE APPLICATION ROUTING (SPA Engine)
+// ==========================================
+window.navigate = function (viewId) {
+    // Deactivate all views
+    document.querySelectorAll('.page-view').forEach(v => v.classList.remove('active'));
     
+    // Activate target view
+    const target = document.getElementById(viewId);
+    if (target) target.classList.add('active');
+
+    // Manage standard public header/footer visibility context
+    const isAdminView = (viewId === 'admin-login-view' || viewId === 'admin-dashboard-view');
+    const mainHeader = document.getElementById('main-header');
+    const mainFooter = document.getElementById('main-footer');
+    
+    if (mainHeader) mainHeader.style.display = isAdminView ? 'none' : 'flex';
+    if (mainFooter) mainFooter.style.display = isAdminView ? 'none' : 'block';
+
+    // Route access intercept loops
     if (viewId === 'admin-dashboard-view') {
-        if(masterHeaderElement) masterHeaderElement.style.display = 'none';
-        if(primaryAppFooterElement) primaryAppFooterElement.style.display = 'none';
-        loadAdminDashboardData();
-    } else {
-        if(masterHeaderElement) masterHeaderElement.style.display = 'flex';
-        if(primaryAppFooterElement) primaryAppFooterElement.style.display = 'block';
+        if (sessionStorage.getItem('adminAuth') !== 'true') {
+            window.navigate('admin-login-view');
+        } else {
+            window.switchAdminTab('dash');
+        }
     }
 
     if (viewId === 'public-leads-view') {
-        initializeRealtimePublicLeadsStream();
+        window.loadPublicLeads();
     }
-};
-
-// =========================================================================
-// INTERACTION STRUCTURAL HUD & SLIDER BEHAVIORS MODIFIERS
-// =========================================================================
-document.addEventListener("DOMContentLoaded", () => {
-    const menuBtn = document.getElementById("menuBtn");
-    const mobileMenu = document.getElementById("mobileMenu");
-    const progressBar = document.getElementById("progressBar");
-    const scrollTopBtn = document.getElementById("scrollTop");
-
-    if (menuBtn && mobileMenu) {
-        menuBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            mobileMenu.classList.toggle("show");
-        });
-        document.addEventListener("click", () => mobileMenu.classList.remove("show"));
-    }
-
-    window.addEventListener("scroll", () => {
-        if (window.scrollY > 40) {
-            document.getElementById("main-header")?.classList.add("sticky");
-        } else {
-            document.getElementById("main-header")?.classList.remove("sticky");
-        }
-
-        let scrollRatioPercentage = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
-        if (progressBar) progressBar.style.width = scrollRatioPercentage + "%";
-
-        if (window.scrollY > 300) {
-            scrollTopBtn?.classList.add("active");
-        } else {
-            scrollTopBtn?.classList.remove("active");
-        }
-    });
-
-    scrollTopBtn?.addEventListener("click", () => {
-        window.scrollTo({ top: 0, behavior: "smooth" });
-    });
-
-    document.querySelectorAll(".faq-question").forEach(item => {
-        item.addEventListener("click", () => {
-            item.parentElement?.classList.toggle("active");
-        });
-    });
-
-    renderTestimonialsTrackSystem();
-    observeAuthStateStatusTracking();
-});
-
-// =========================================================================
-// REAL-TIME FIRESTORE RECEPTION PIPELINES & CARDS RENDERING LOGIC
-// =========================================================================
-function initializeRealtimePublicLeadsStream() {
-    onSnapshot(collection(db, "leads"), (querySnapshot) => {
-        publicLeadsTrackingArray = [];
-        querySnapshot.forEach((documentObject) => {
-            publicLeadsTrackingArray.push({ id: documentObject.id, ...documentObject.data() });
-        });
-        renderPublicLeadsGridMatrix();
-    }, (error) => {
-        console.error("Fault Intaking Live Leads Array Block Pipeline Hook: ", error);
-    });
-}
-
-window.setLeadFilter = function(categoryTag) {
-    currentFilterCategory = categoryTag;
-    document.querySelectorAll("#categoryFilterContainer .filter-pill").forEach(pill => {
-        pill.classList.remove("active");
-        if(pill.getAttribute("onclick").includes(`'${categoryTag}'`)) {
-            pill.classList.add("active");
-        }
-    });
-    renderPublicLeadsGridMatrix();
-};
-
-function renderPublicLeadsGridMatrix() {
-    const leadsViewportGridTarget = document.getElementById("publicLeadsGrid");
-    if (!leadsViewportGridTarget) return;
-
-    const targetedFilteredDataPool = currentFilterCategory === 'all' 
-        ? publicLeadsTrackingArray 
-        : publicLeadsTrackingArray.filter(lead => lead.category?.toLowerCase() === currentFilterCategory.toLowerCase());
-
-    if (targetedFilteredDataPool.length === 0) {
-        leadsViewportGridTarget.innerHTML = `
-            <div style="grid-column: 1/-1; text-align: center; padding: 60px; color: #64748b;">
-                <i class="fa-solid fa-folder-open" style="font-size: 44px; color: #cbd5e1; margin-bottom: 15px;"></i>
-                <p>No active verified lead sets currently match the selected industry segment.</p>
-            </div>`;
-        return;
-    }
-
-    leadsViewportGridTarget.innerHTML = targetedFilteredDataPool.map(lead => `
-        <div class="lead-card">
-            <span class="lead-badge badge-${lead.category?.toLowerCase() || 'default'}">${lead.category || 'General Data Node'}</span>
-            <h3>${lead.title || 'Premium Leads Batch'}</h3>
-            <p>${lead.description || 'Verified prospects details mapping target profiles matching explicit specifications.'}</p>
-            <div class="lead-meta">
-                <span><i class="fa-solid fa-location-dot"></i> ${lead.location || 'United States'}</span>
-                <span style="font-weight: 700; color: #143d73;">${lead.price || 'Pricing Matrix Inquire'}</span>
-            </div>
-            <button class="lead-action-btn" onclick="window.navigate('contact-view')">Acquire Active Lead Set</button>
-        </div>
-    `).join('');
-}
-
-// =========================================================================
-// INBOUND PUBLIC REQUEST INTERFACE FORM CAPTURE SYSTEM
-// =========================================================================
-const publicInboundContactFormTarget = document.getElementById("publicContactForm");
-if (publicInboundContactFormTarget) {
-    publicInboundContactFormTarget.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        
-        const pipelinePayloadDataBlock = {
-            name: document.getElementById("contact-name").value.trim(),
-            email: document.getElementById("contact-email").value.trim(),
-            phone: document.getElementById("contact-phone").value.trim(),
-            message: document.getElementById("contact-message").value.trim(),
-            status: "unassigned",
-            timestamp: serverTimestamp()
-        };
-
-        try {
-            await addDoc(collection(db, "contact_submissions"), pipelinePayloadDataBlock);
-            alert("Security transmission verified. Your operational inquiry parameters have been logged.");
-            publicInboundContactFormTarget.reset();
-        } catch (faultExceptionError) {
-            console.error("Fault Dispatching Inbound Inquiries Payload Object: ", faultExceptionError);
-            alert("Pipeline Connection Reset Fault.");
-        }
-    });
-}
-
-// =========================================================================
-// ADMINISTRATIVE GATEKEEPER ACCOUNT AUTHENTICATION SUB-SYSTEM
-// =========================================================================
-const adminPortalLoginFormTarget = document.getElementById("adminLoginForm");
-if (adminPortalLoginFormTarget) {
-    adminPortalLoginFormTarget.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        const authorizationEmailToken = document.getElementById("login-email").value.trim();
-        const securitySecretKeyToken = document.getElementById("login-password").value.trim();
-
-        try {
-            await signInWithEmailAndPassword(auth, authorizationEmailToken, securitySecretKeyToken);
-            adminPortalLoginFormTarget.reset();
-            window.navigate("admin-dashboard-view");
-        } catch (authenticationExceptionError) {
-            console.error("Portal Authentication Refusal: ", authenticationExceptionError);
-            alert("Security Authentication Access Violation: Invalid identity signature keys.");
-        }
-    });
-}
-
-const portalLogoutTriggerActionNode = document.getElementById("adminLogoutBtn");
-if (portalLogoutTriggerActionNode) {
-    portalLogoutTriggerActionNode.addEventListener("click", async () => {
-        try {
-            await signOut(auth);
-            window.navigate("home-view");
-        } catch (logoutFaultException) {
-            console.error("Logout System Session Token Invalidation Error: ", logoutFaultException);
-        }
-    });
-}
-
-function observeAuthStateStatusTracking() {
-    onAuthStateChanged(auth, (authenticatedUserNode) => {
-        if (authenticatedUserNode) {
-            console.log("Admin Identity Cleared.");
-        }
-    });
-}
-
-// =========================================================================
-// CRM MAIN DATA MANAGEMENT CONSOLE HUB VISUAL CONTROLLERS
-// =========================================================================
-window.switchAdminTab = function(targetTabContentId) {
-    document.querySelectorAll(".crm-item").forEach(item => item.classList.remove("active"));
-    document.querySelectorAll(".crm-tab-content").forEach(contentBlock => contentBlock.classList.remove("active"));
-
-    const associatedMenuSelectionPill = document.querySelector(`.crm-item[data-tab="${targetTabContentId}"]`);
-    if (associatedMenuSelectionPill) associatedMenuSelectionPill.classList.add("active");
-
-    const targetedTabContainerView = document.getElementById(targetTabContentId);
-    if (targetedTabContainerView) targetedTabContainerView.classList.add("active");
-};
-
-function loadAdminDashboardData() {
-    onSnapshot(collection(db, "leads"), (querySnapshot) => {
-        let leadsRecordsArray = [];
-        querySnapshot.forEach(docObj => leadsRecordsArray.push({ id: docObj.id, ...docObj.data() }));
-        populateAdminLeadsInventoryInterface(leadsRecordsArray);
-        compileDashboardMetricTrackCards(leadsRecordsArray, null);
-    });
-
-    onSnapshot(collection(db, "contact_submissions"), (querySnapshot) => {
-        let submissionsRecordsArray = [];
-        querySnapshot.forEach(docObj => submissionsRecordsArray.push({ id: docObj.id, ...docObj.data() }));
-        populateAdminInboundSubmissionsLogView(submissionsRecordsArray);
-        renderKanbanPipelineControlBoard(submissionsRecordsArray);
-        compileDashboardMetricTrackCards(null, submissionsRecordsArray);
-    });
-}
-
-let historicalLeadsCounterCache = 0;
-let historicalSubmissionsCounterCache = 0;
-
-function compileDashboardMetricTrackCards(leadsBatchArray, submissionsBatchArray) {
-    if (leadsBatchArray) historicalLeadsCounterCache = leadsBatchArray.length;
-    if (submissionsBatchArray) historicalSubmissionsCounterCache = submissionsBatchArray.length;
-
-    const statTotalLeadsNode = document.getElementById("stat-total-leads");
-    const statPublishedLeadsNode = document.getElementById("stat-published-leads");
-    const statTotalSubmissionsNode = document.getElementById("stat-total-submissions");
-    const statConversionRateNode = document.getElementById("stat-conversion-rate");
-
-    if (statTotalLeadsNode) statTotalLeadsNode.innerText = historicalLeadsCounterCache;
-    if (statPublishedLeadsNode) statPublishedLeadsNode.innerText = historicalLeadsCounterCache;
-    if (statTotalSubmissionsNode) statTotalSubmissionsNode.innerText = historicalSubmissionsCounterCache;
     
-    if (statConversionRateNode && historicalLeadsCounterCache > 0) {
-        let calculatedRatioMetric = Math.round((historicalSubmissionsCounterCache / historicalLeadsCounterCache) * 100);
-        statConversionRateNode.innerText = `${calculatedRatioMetric}%`;
-    }
-}
-
-function populateAdminLeadsInventoryInterface(leadsDataPool) {
-    const targetTableContainerBodyNode = document.getElementById("adminLeadsTableBody");
-    if (!targetTableContainerBodyNode) return;
-
-    if (leadsDataPool.length === 0) {
-        targetTableContainerBodyNode.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 30px; color: #94a3b8;">No lead parameters records allocated within the database space.</td></tr>`;
-        return;
-    }
-
-    targetTableContainerBodyNode.innerHTML = leadsDataPool.map(lead => `
-        <tr>
-            <td style="font-weight: 600; color: #1e293b;">${lead.title || 'Unnamed Record Node'}</td>
-            <td><span class="lead-badge badge-${lead.category?.toLowerCase() || 'default'}" style="margin:0;">${lead.category || 'General'}</span></td>
-            <td>${lead.location || 'Global Bound Routing'}</td>
-            <td style="font-weight:700; color: #1e293b;">${lead.price || 'TBD'}</td>
-            <td><span class="status-pill status-active">Active Stream</span></td>
-            <td>
-                <button class="action-icon-btn btn-delete" onclick="deleteLeadRecordStructure('${lead.id}')" title="Delete Permanent Node"><i class="fa-solid fa-trash-can"></i></button>
-            </td>
-        </tr>
-    `).join('');
-}
-
-function populateAdminInboundSubmissionsLogView(submissionsDataPool) {
-    const targetSubmissionsTableBodyNode = document.getElementById("adminSubmissionsTableBody");
-    if (!targetSubmissionsTableBodyNode) return;
-
-    if (submissionsDataPool.length === 0) {
-        targetSubmissionsTableBodyNode.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 30px; color: #94a3b8;">Queue clean. No pending user input payloads detected inside active threads.</td></tr>`;
-        return;
-    }
-
-    targetSubmissionsTableBodyNode.innerHTML = submissionsDataPool.map(submission => {
-        let parsingTimestampString = submission.timestamp?.toDate ? submission.timestamp.toDate().toLocaleString() : "Realtime Sync Tracking Process";
-        return `
-            <tr>
-                <td style="font-weight: 600; color: #1e293b;">${submission.name || 'Anonymous Prospect'}</td>
-                <td><a href="mailto:${submission.email}" style="color: #184e92; text-decoration:none;">${submission.email || 'N/A'}</a></td>
-                <td>${submission.phone || 'N/A'}</td>
-                <td style="max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${submission.message}">${submission.message || 'No context message block specified.'}</td>
-                <td style="font-size: 12px; color: #64748b;">${parsingTimestampString}</td>
-            </tr>
-        `;
-    }).join('');
-}
-
-// =========================================================================
-// PIPELINE MONITOR KANBAN CONTROLLER VISUAL STRUCTURAL MAPPING DATA
-// =========================================================================
-function renderKanbanPipelineControlBoard(submissionsDataPool) {
-    const columnsPipelinesSelectorsMappingNodes = {
-        unassigned: document.getElementById("kanban-unassigned"),
-        processing: document.getElementById("kanban-processing"),
-        won: document.getElementById("kanban-won")
-    };
-
-    const countLabelsSelectorsMappingNodes = {
-        unassigned: document.getElementById("count-unassigned"),
-        processing: document.getElementById("count-processing"),
-        won: document.getElementById("count-won")
-    };
-
-    Object.values(columnsPipelinesSelectorsMappingNodes).forEach(column => { if (column) column.innerHTML = ""; });
-    Object.values(countLabelsSelectorsMappingNodes).forEach(label => { if (label) label.innerText = "0"; });
-
-    let pipelinesCountersDistributionObjects = { unassigned: 0, processing: 0, won: 0 };
-
-    submissionsDataPool.forEach(taskItem => {
-        let taskStateAllocationFlag = taskItem.status || "unassigned";
-        if (!columnsPipelinesSelectorsMappingNodes[taskStateAllocationFlag]) taskStateAllocationFlag = "unassigned";
-
-        pipelinesCountersDistributionObjects[taskStateAllocationFlag]++;
-        
-        const cardStructuralNodeBuilder = document.createElement("div");
-        cardStructuralNodeBuilder.className = "kanban-card";
-        cardStructuralNodeBuilder.innerHTML = `
-            <h3>${taskItem.name || 'Prospect Client'}</h3>
-            <p>${taskItem.message || 'No parameters requirements detailed context.'}</p>
-            <div class="kanban-card-footer">
-                <span><i class="fa-solid fa-phone" style="margin-right:4px;"></i>${taskItem.phone || 'No Contact Data'}</span>
-                <select onchange="updatePipelineNodeRouteState('${taskItem.id}', this.value)" style="padding: 4px; font-size: 11px; border-radius: 6px; background:#f8fafc; color:#334155; border:1px solid #cbd5e1;">
-                    <option value="unassigned" ${taskStateAllocationFlag === 'unassigned' ? 'selected' : ''}>Node New</option>
-                    <option value="processing" ${taskStateAllocationFlag === 'processing' ? 'selected' : ''}>Processing</option>
-                    <option value="won" ${taskStateAllocationFlag === 'won' ? 'selected' : ''}>Authorized</option>
-                </select>
-            </div>
-        `;
-        columnsPipelinesSelectorsMappingNodes[taskStateAllocationFlag]?.appendChild(cardStructuralNodeBuilder);
-    });
-
-    Object.keys(countLabelsSelectorsMappingNodes).forEach(key => {
-        if (countLabelsSelectorsMappingNodes[key]) countLabelsSelectorsMappingNodes[key].innerText = pipelinesCountersDistributionObjects[key];
-    });
-}
-
-// =========================================================================
-// ACTION LIFECYCLE MODAL CONTROL STRATEGIES & RECORD MUTATION OPERATIONS
-// =========================================================================
-window.openAddLeadModal = function() {
-    document.getElementById("addLeadModalOverlay")?.classList.add("show");
+    // Smooth reset scroll layout orientation
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
-window.closeAddLeadModal = function() {
-    document.getElementById("addLeadModalOverlay")?.classList.remove("show");
-};
+// ==========================================
+// 03. PUBLIC VIEW CLIENT ACTIONS & LEAD PROCESSING
+// ==========================================
+window.submitContactForm = async function (e) {
+    e.preventDefault();
+    if (!db) return alert("Database connection error. Please verify configuration.");
 
-const crmLeadAdditionExecutionFormTarget = document.getElementById("addLeadForm");
-if (crmLeadAdditionExecutionFormTarget) {
-    crmLeadAdditionExecutionFormTarget.addEventListener("submit", async (e) => {
-        e.preventDefault();
+    const form = e.target;
+    
+    // Multi-tier structural selectors safeguard form read operations
+    const name = form.name?.value || form.querySelector('input[type="text"], input[placeholder*="Name"]')?.value || '';
+    const email = form.email?.value || form.querySelector('input[type="email"], input[placeholder*="Email"]')?.value || '';
+    const phone = form.phone?.value || form.querySelector('input[type="tel"], input[placeholder*="Phone"]')?.value || '';
+    const message = form.message?.value || form.querySelector('textarea')?.value || '';
 
-        const customLeadStructuralDocBlockInstance = {
-            title: document.getElementById("modal-title").value.trim(),
-            category: document.getElementById("modal-category").value,
-            location: document.getElementById("modal-location").value.trim(),
-            price: document.getElementById("modal-price").value.trim(),
-            description: document.getElementById("modal-desc").value.trim(),
+    const btn = form.querySelector('button');
+    const originalText = btn ? btn.innerText : "Send Message";
+    if (btn) btn.innerText = "Sending...";
+
+    try {
+        await addDoc(collection(db, "contact_submissions"), {
+            name, email, phone, message,
+            status: "NEW",
             timestamp: serverTimestamp()
-        };
+        });
+        alert("Your inquiry has been submitted successfully!");
+        form.reset();
+    } catch (error) {
+        console.error("Firestore Document Transmission Error:", error);
+        alert("Failed to submit request. Check database rule parameters.");
+    } finally {
+        if (btn) btn.innerText = originalText;
+    }
+};
 
-        try {
-            await addDoc(collection(db, "leads"), customLeadStructuralDocBlockInstance);
-            alert("Database Mutation Verified: Target Lead Array injected cleanly.");
-            crmLeadAdditionExecutionFormTarget.reset();
-            closeAddLeadModal();
-        } catch (insertionFaultException) {
-            console.error("Failure Injecting Document Record: ", insertionFaultException);
-            alert("Security Ledger Refusal Error Encountered.");
+window.loadPublicLeads = async function () {
+    const grid = document.getElementById('public-leads-grid');
+    if (!grid) return;
+    
+    if (!db) { 
+        grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:red;">Database connectivity failure. Check settings.</div>'; 
+        return; 
+    }
+
+    grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; font-weight:500; color:var(--text-muted);"><i class="fa-solid fa-spinner fa-spin" style="margin-right:10px;"></i>Loading active verified leads...</div>';
+
+    try {
+        const snap = await getDocs(collection(db, "published_leads"));
+        allPublishedLeads = [];
+
+        snap.forEach(doc => {
+            allPublishedLeads.push(doc.data());
+        });
+
+        window.filterPublicLeads(); 
+
+    } catch (e) {
+        console.error("Firestore Document Read Sequence Interrupted:", e);
+        grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:red;">Error loading leads cache framework.</div>';
+    }
+};
+
+// Category Pill Handler Engine
+window.setLeadFilter = function (category) {
+    currentCategoryFilter = category;
+
+    // Synchronize current filter node component tokens
+    document.querySelectorAll('.filter-pill').forEach(btn => {
+        if (btn.innerText.trim() === category) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
         }
     });
+
+    window.filterPublicLeads();
+};
+
+// Lead Filtering Pipeline Rendering Matrix
+window.filterPublicLeads = function () {
+    const grid = document.getElementById('public-leads-grid');
+    if (!grid) return;
+
+    const searchInput = document.getElementById('lead-search-input');
+    const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+
+    let filteredLeads = allPublishedLeads.filter(lead => {
+        const matchesCategory = currentCategoryFilter === 'All' || lead.category === currentCategoryFilter;
+        const matchesSearch = (lead.title?.toLowerCase().includes(searchTerm) || 
+                             lead.description?.toLowerCase().includes(searchTerm) || 
+                             lead.category?.toLowerCase().includes(searchTerm));
+
+        return matchesCategory && matchesSearch;
+    });
+
+    // Update Layout Tracking Summaries Counter
+    const summary = document.getElementById('lead-results-summary');
+    if (summary) {
+        summary.innerText = currentCategoryFilter === 'All'
+            ? `Showing ${filteredLeads.length} total leads`
+            : `Showing ${filteredLeads.length} leads in ${currentCategoryFilter}`;
+    }
+
+    if (filteredLeads.length === 0) {
+        grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:60px 20px; color:var(--text-muted); font-size:16px;">No leads match your matching criteria profile configurations.</div>';
+        return;
+    }
+
+    let html = '';
+    filteredLeads.forEach(data => {
+        // Evaluate appropriate context graphic classes
+        let iconClass = "fa-briefcase";
+        if (data.category === "Insurance") iconClass = "fa-shield-halved";
+        if (data.category === "Finance") iconClass = "fa-dollar-sign";
+        if (data.category === "Legal") iconClass = "fa-scale-balanced";
+        if (data.category === "Healthcare") iconClass = "fa-heart-pulse";
+        if (data.category === "RenewableEnergy") iconClass = "fa-leaf";
+        if (data.category === "IT") iconClass = "fa-laptop-code";
+
+        html += `
+            <div class="lead-card-new" style="background:var(--white); padding:30px; border-radius:var(--radius-md); box-shadow:var(--shadow-sm); display:flex; gap:20px; transition:var(--transition); border:1px solid #f0f4f9;">
+                <div class="lead-icon" style="width:55px; height:55px; background:var(--bg-light); border-radius:50%; display:flex; justify-content:center; align-items:center; color:var(--accent-dark); font-size:22px; flex-shrink:0;">
+                    <i class="fa-solid ${iconClass}"></i>
+                </div>
+                <div class="lead-details" style="flex:1; display:flex; flex-direction:column; justify-content:space-between;">
+                    <div style="margin-bottom:15px;">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:8px;">
+                            <h4 style="font-size:18px; font-weight:700; color:var(--primary); line-height:1.4;">${data.title}</h4>
+                            <span class="badge" style="background:#e0f2fe; color:var(--primary-light); padding:5px 12px; border-radius:20px; font-size:12px; font-weight:600; white-space:nowrap;">${data.category}</span>
+                        </div>
+                        <p style="font-size:14px; color:var(--text-muted); line-height:1.6; margin-bottom:15px;">${data.description}</p>
+                    </div>
+                    <button class="btn-view" onclick="window.navigate('contact-view')" style="align-self:flex-start; background:none; border:none; color:var(--accent-dark); font-weight:700; font-size:14px; cursor:pointer; padding:0; display:flex; align-items:center; gap:5px; transition:var(--transition);">
+                        View Details <i class="fa-solid fa-arrow-right" style="font-size:12px;"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    grid.innerHTML = html;
+};
+
+// ==========================================
+// 04. SECURE ADMIN PORTAL AUTHENTICATION
+// ==========================================
+window.checkLogin = function (e) {
+    e.preventDefault();
+    const email = document.getElementById("admin-email")?.value;
+    const pass = document.getElementById("admin-password")?.value;
+
+    if (email === "admin@gmail.com" && pass === "1234") {
+        sessionStorage.setItem('adminAuth', 'true');
+        if (document.getElementById("admin-password")) {
+            document.getElementById("admin-password").value = '';
+        }
+        window.navigate('admin-dashboard-view');
+    } else {
+        alert("Invalid Access Credentials Configuration");
+    }
+};
+
+window.logout = function () {
+    sessionStorage.removeItem('adminAuth');
+    window.navigate('admin-login-view');
+};
+
+// ==========================================
+// 05. PRIVATE SYSTEM CRM CONTROL PANEL ENGINE
+// ==========================================
+window.switchAdminTab = function (tabName) {
+    document.querySelectorAll('.crm-sidebar a').forEach(a => a.classList.remove('active'));
+    const targetedNavLink = document.getElementById(`nav-${tabName}`);
+    if (targetedNavLink) targetedNavLink.classList.add('active');
+
+    const tabs = ['dash', 'leads', 'users', 'contactforms', 'reports'];
+    tabs.forEach(t => {
+        const tabEl = document.getElementById(`tab-${t}`);
+        if (tabEl) tabEl.classList.add('hidden');
+    });
+    
+    const targetedTabWindow = document.getElementById(`tab-${tabName}`);
+    if (targetedTabWindow) targetedTabWindow.classList.remove('hidden');
+
+    if (tabName === 'dash') loadAdminDash();
+    if (tabName === 'leads') loadAdminLeads();
+    if (tabName === 'contactforms' || tabName === 'users') loadContactFormsAndKanban();
+    if (tabName === 'reports') loadAdminReports();
+};
+
+window.openAddLeadModal = () => {
+    const modal = document.getElementById('add-lead-modal');
+    if (modal) modal.classList.remove('hidden');
+};
+
+// --- Tab Module 1: Core Dashboard Operational Metrics ---
+async function loadAdminDash() {
+    if (!db) return;
+    try {
+        const snap = await getDocs(collection(db, "published_leads"));
+        const dashTotal = document.getElementById('dash-total');
+        const dashActive = document.getElementById('dash-active');
+        const dashNew = document.getElementById('dash-new');
+        
+        if (dashTotal) dashTotal.innerText = snap.size;
+        if (dashActive) dashActive.innerText = snap.size;
+        if (dashNew) dashNew.innerText = 0;
+    } catch (e) { 
+        console.error("Dashboard metric resolution failed:", e); 
+    }
 }
 
-window.deleteLeadRecordStructure = async function(documentRecordIdentifierKey) {
-    if (!confirm("Are you sure you want to permanently delete this lead record?")) return;
+// --- Tab Module 2: Published CRM Leads Processing Matrix ---
+window.submitNewLead = async function (e) {
+    e.preventDefault();
+    const title = document.getElementById('modal-title')?.value;
+    const cat = document.getElementById('modal-cat')?.value;
+    const desc = document.getElementById('modal-desc')?.value;
+
     try {
-        await deleteDoc(doc(db, "leads", documentRecordIdentifierKey));
-        alert("Lead record deleted successfully.");
-    } catch (deletionExceptionError) {
-        console.error("Failure Processing Target Record Erasure: ", deletionExceptionError);
+        await addDoc(collection(db, "published_leads"), {
+            title, category: cat, description: desc, status: "Active", timestamp: serverTimestamp()
+        });
+        const modal = document.getElementById('add-lead-modal');
+        if (modal) modal.classList.add('hidden');
+        
+        e.target.reset();
+        loadAdminLeads();
+        loadAdminDash();
+    } catch (err) { 
+        console.error("Error committing dynamic item framework creation logic:", err); 
+        alert("Failed to write lead document configuration parameters."); 
     }
 };
 
-window.updatePipelineNodeRouteState = async function(documentRecordIdentifierKey, targetStateTransitionToken) {
+window.deletePublishedLead = async function (id) {
+    if (!confirm("Are you sure you want to permanently delete this lead mapping?")) return;
     try {
-        const structuralTargetDocumentReference = doc(db, "contact_submissions", documentRecordIdentifierKey);
-        await updateDoc(structuralTargetDocumentReference, { status: targetStateTransitionToken });
-        console.log(`State Route Mutation Committed: Node ID [${documentRecordIdentifierKey}] State -> ${targetStateTransitionToken}`);
-    } catch (pipelineMutationFaultException) {
-        console.error("Mutation Refusal Intercepted from Database Engine System Loop: ", pipelineMutationFaultException);
+        await deleteDoc(doc(db, "published_leads", id));
+        loadAdminLeads();
+    } catch (err) {
+        console.error("Delete operation baseline dropped:", err);
     }
 };
 
-// =========================================================================
-// TESTIMONIALS ROLLING TIMEOUT MATRIX
-// =========================================================================
-function renderTestimonialsTrackSystem() {
-    const dynamicTestimonialTrackTargetNode = document.getElementById("testimonialTrack");
-    if (!dynamicTestimonialTrackTargetNode) return;
+async function loadAdminLeads() {
+    if (!db) return;
+    const tbody = document.getElementById('admin-published-leads-table');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted);">Syncing secure dynamic payload rows...</td></tr>';
 
-    const historicalOnboardedProfilesLedger = [
-        { message: "QFY Leads helped us reach highly targeted insurance, medical, and telecom clients with excellent accuracy and compliance.", name: "Murtaza Siyahi", role: "Business Owner, Tasaif LLC", location: "Wyoming, United States" },
-        { message: "The quality of leads provided helped our funding campaigns perform better. Strong understanding of financial services.", name: "Bryan J Duelley", role: "Owner, MY Company Funding LLC", location: "Texas, United States" },
-        { message: "QFY Leads supported our expansion across medical and legal translation services with relevant and well-targeted leads.", name: "Yoni Ohayon", role: "CEO, eTranslationServices.com", location: "United States" },
-        { message: "Consistent lead delivery and strong campaign understanding helped scale our healthcare-focused call center operations.", name: "William Marroquin", role: "CEO, HealthBrokersPro", location: "California, United States" },
-        { message: "Their intent-based targeting helped accelerate conversions across finance and debt-related services.", name: "Alex Frias", role: "Investor & Entrepreneur, Hilldale Corp", location: "United States" },
-        { message: "Reliable healthcare leads suitable for telemarketing and online outreach. Smooth coordination throughout.", name: "Jonatan Arano", role: "General Manager, Trusted Medical Providers", location: "Los Angeles Metro Area" }
-    ];
+    try {
+        const snap = await getDocs(collection(db, "published_leads"));
+        const leadTotalBtn = document.getElementById('leads-tab-total-btn');
+        if (leadTotalBtn) leadTotalBtn.innerText = `Total Leads: ${snap.size}`;
+        
+        let html = '';
+        snap.forEach(d => {
+            const data = d.data();
+            const badgeColor = data.category === 'Finance' ? 'badge-light-blue' : (data.category === 'B2B' ? 'badge-light-purple' : 'badge-light-green');
 
-    dynamicTestimonialTrackTargetNode.innerHTML = historicalOnboardedProfilesLedger.map(profile => `
-        <div class="testimonial-card">
-            <div class="quote"><i class="fa-solid fa-quote-left"></i></div>
-            <div class="stars">★★★★★</div>
-            <p>${profile.message}</p>
-            <div class="client">
-                <h4>${profile.name}</h4>
-                <span>${profile.role}</span>
-                <small>${profile.location}</small>
-            </div>
-        </div>
-    `).join("");
-
-    let visualActivePointerIndexValue = 0;
-    const clickNextActionControlTriggerNode = document.querySelector(".next");
-    const clickPrevActionControlTriggerNode = document.querySelector(".prev");
-    const baselineCardWidthBoundMetric = 405;
-
-    function transitionCarouselTrack() {
-        dynamicTestimonialTrackTargetNode.style.transform = `translateX(-${visualActivePointerIndexValue * baselineCardWidthBoundMetric}px)`;
+            html += `
+            <tr style="border-bottom:1px solid #edf2f7;">
+                <td style="padding:16px; font-weight:600; color:var(--primary);">${data.title}</td>
+                <td style="padding:16px;"><span class="badge ${badgeColor}" style="padding:4px 10px; border-radius:12px; font-size:12px; font-weight:600;">${data.category}</span></td>
+                <td style="padding:16px;"><span class="badge badge-light-green" style="background:#e6f4ea; color:#137333; padding:4px 10px; border-radius:12px; font-size:12px; font-weight:600;">Active</span></td>
+                <td style="padding:16px;">
+                    <button class="btn-sm bg-red" onclick="window.deletePublishedLead('${d.id}')" style="background:#dc2626; color:var(--white); border:none; padding:6px 14px; border-radius:var(--radius-sm); font-weight:600; font-size:12px; cursor:pointer; transition:var(--transition);">Delete</button>
+                </td>
+            </tr>`;
+        });
+        tbody.innerHTML = html || '<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted);">No active leads cataloged inside index arrays.</td></tr>';
+    } catch (e) { 
+        console.error(e); 
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:red;">System layout stream index mismatch configuration failure.</td></tr>'; 
     }
+}
 
-    clickNextActionControlTriggerNode?.addEventListener("click", () => {
-        visualActivePointerIndexValue = (visualActivePointerIndexValue < historicalOnboardedProfilesLedger.length - 1) ? visualActivePointerIndexValue + 1 : 0;
-        transitionCarouselTrack();
-    });
+// --- Tab Modules 3 & 4: Contacts Management & Interactive Kanban Framework ---
+window.updateContactStatus = async function (id, newStatus) {
+    try {
+        await updateDoc(doc(db, "contact_submissions", id), { status: newStatus });
+        loadContactFormsAndKanban();
+    } catch (err) {
+        console.error("Status state mutation rejected:", err);
+    }
+};
 
-    clickPrevActionControlTriggerNode?.addEventListener("click", () => {
-        visualActivePointerIndexValue = (visualActivePointerIndexValue > 0) ? visualActivePointerIndexValue - 1 : historicalOnboardedProfilesLedger.length - 1;
-        transitionCarouselTrack();
-    });
+window.deleteContactForm = async function (id) {
+    if (!confirm("Permanently drop data transmission submission record?")) return;
+    try {
+        await deleteDoc(doc(db, "contact_submissions", id));
+        loadContactFormsAndKanban();
+    } catch (err) {
+        console.error("Record purge failed:", err);
+    }
+};
 
-    setInterval(() => {
-        visualActivePointerIndexValue = (visualActivePointerIndexValue + 1) % historicalOnboardedProfilesLedger.length;
-        transitionCarouselTrack();
-    }, 4000);
+async function loadContactFormsAndKanban() {
+    if (!db) return;
+    const tbody = document.getElementById('admin-contact-forms-table');
+    if (!tbody) return;
+    
+    const kb = { NEW: '', CONTACTED: '', IN_PROGRESS: '', CONVERTED: '', LOST: '' };
+
+    try {
+        const snap = await getDocs(collection(db, "contact_submissions"));
+        let tableHtml = '';
+
+        snap.forEach(d => {
+            const data = d.data();
+            const id = d.id;
+            const s = data.status || "NEW";
+
+            let sBadge = 'badge-light-blue';
+            if (s === 'CONTACTED') sBadge = 'badge-light-yellow';
+            if (s === 'IN_PROGRESS') sBadge = 'badge-light-purple';
+            if (s === 'CONVERTED') sBadge = 'badge-light-green';
+            if (s === 'LOST') sBadge = 'badge-light-red';
+
+            tableHtml += `
+            <tr style="border-bottom:1px solid #edf2f7;">
+                <td style="padding:16px; font-weight:600; color:var(--primary);">${data.name}</td>
+                <td style="padding:16px; font-size:14px;">${data.email}</td>
+                <td style="padding:16px; font-size:14px;">${data.phone}</td>
+                <td style="padding:16px;"><div style="max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13px; color:var(--text-muted);">${data.message}</div></td>
+                <td style="padding:16px;"><span class="badge ${sBadge}" style="padding:4px 10px; border-radius:12px; font-size:12px; font-weight:600;">${s}</span></td>
+                <td style="padding:16px; min-width:260px; display:flex; gap:6px; flex-wrap:wrap;">
+                    <button class="btn-sm bg-blue" onclick="window.updateContactStatus('${id}','CONTACTED')" style="background:#2563eb; color:var(--white); border:none; padding:4px 10px; border-radius:4px; font-size:11px; font-weight:600; cursor:pointer;">Contact</button>
+                    <button class="btn-sm bg-purple" onclick="window.updateContactStatus('${id}','IN_PROGRESS')" style="background:#7c3aed; color:var(--white); border:none; padding:4px 10px; border-radius:4px; font-size:11px; font-weight:600; cursor:pointer;">Progress</button>
+                    <button class="btn-sm bg-green" onclick="window.updateContactStatus('${id}','CONVERTED')" style="background:#16a34a; color:var(--white); border:none; padding:4px 10px; border-radius:4px; font-size:11px; font-weight:600; cursor:pointer;">Convert</button>
+                    <button class="btn-sm bg-red" onclick="window.updateContactStatus('${id}','LOST')" style="background:#dc2626; color:var(--white); border:none; padding:4px 10px; border-radius:4px; font-size:11px; font-weight:600; cursor:pointer;">Lost</button>
+                </td>
+            </tr>`;
+
+            const cardMarkup = `<div class="kanban-card" style="background:var(--white); padding:14px; border-radius:var(--radius-sm); box-shadow:var(--shadow-sm); margin-bottom:10px; border-left:4px solid var(--primary-light); font-weight:600; font-size:13px; color:var(--primary);">${data.name}</div>`;
+            if (kb[s] !== undefined) {
+                kb[s] += cardMarkup;
+            } else {
+                kb['NEW'] += cardMarkup;
+            }
+        });
+
+        tbody.innerHTML = tableHtml || '<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--text-muted);">No request logs cataloged inside the target databases.</td></tr>';
+
+        // Load visual structural frames interface for Kanban streams
+        const kbNew = document.getElementById('kb-new');
+        const kbContacted = document.getElementById('kb-contacted');
+        const kbInProgress = document.getElementById('kb-inprogress');
+        const kbConverted = document.getElementById('kb-converted');
+        const kbLost = document.getElementById('kb-lost');
+
+        if (kbNew) kbNew.innerHTML = kb.NEW || '<div style="color:#94a3b8; font-size:12px; text-align:center; padding:10px;">No Leads</div>';
+        if (kbContacted) kbContacted.innerHTML = kb.CONTACTED || '<div style="color:#94a3b8; font-size:12px; text-align:center; padding:10px;">No Leads</div>';
+        if (kbInProgress) kbInProgress.innerHTML = kb.IN_PROGRESS || '<div style="color:#94a3b8; font-size:12px; text-align:center; padding:10px;">No Leads</div>';
+        if (kbConverted) kbConverted.innerHTML = kb.CONVERTED || '<div style="color:#94a3b8; font-size:12px; text-align:center; padding:10px;">No Leads</div>';
+        if (kbLost) kbLost.innerHTML = kb.LOST || '<div style="color:#94a3b8; font-size:12px; text-align:center; padding:10px;">No Leads</div>';
+
+    } catch (e) {
+        console.error("Data synchronization pipeline dropped:", e);
+        tbody.innerHTML = '<tr><td colspan="6" style="color:red; text-align:center; padding:20px;">Secure runtime handshake timeout error.</td></tr>';
+    }
+}
+
+// --- Tab Module 5: Secure Graphical Statistical Analytical Reports ---
+async function loadAdminReports() {
+    if (!db) return;
+    try {
+        const snap = await getDocs(collection(db, "contact_submissions"));
+        let active = 0, lost = 0, total = snap.size;
+
+        snap.forEach(d => {
+            const s = d.data().status;
+            if (s === 'LOST') lost++;
+            else active++;
+        });
+
+        const repTotal = document.getElementById('rep-total');
+        const repActive = document.getElementById('rep-active');
+        const repInactive = document.getElementById('rep-inactive');
+
+        if (repTotal) repTotal.innerText = total;
+        if (repActive) repActive.innerText = active;
+        if (repInactive) repInactive.innerText = lost;
+
+        // Render graphical matrix height properties asynchronously
+        setTimeout(() => {
+            const chartTotal = document.getElementById('chart-total');
+            const chartActive = document.getElementById('chart-active');
+            const chartInactive = document.getElementById('chart-inactive');
+
+            if (chartTotal) chartTotal.style.height = total > 0 ? '100%' : '10%';
+            if (chartActive) chartActive.style.height = total > 0 ? `${(active / total) * 100}%` : '10%';
+            if (chartInactive) chartInactive.style.height = total > 0 ? `${(lost / total) * 100}%` : '10%';
+        }, 100);
+
+    } catch (e) { 
+        console.error("Reporting algorithm interface evaluation broken:", e); 
+    }
 }
