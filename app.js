@@ -1,15 +1,31 @@
 // =========================================================================
 // ARCHITECTURE LOGIC STACK CORE MATRIX INFRASTRUCTURE INTERFACE
 // =========================================================================
-import { db, auth } from './config.js';
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { 
-    collection, addDoc, getDocs, onSnapshot, query, where, doc, deleteDoc, updateDoc, serverTimestamp 
-} from "https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js";
+    getFirestore, collection, addDoc, getDocs, onSnapshot, doc, deleteDoc, updateDoc, serverTimestamp 
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { 
-    signInWithEmailAndPassword, signOut, onAuthStateChanged 
-} from "https://www.gstatic.com/firebasejs/11.2.0/firebase-auth.js";
+    getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged 
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-// STATE REGISTRATION & CONFIGURATION PROPERTIES VARIABLES TRACK
+// CORE FIREBASE INFRASTRUCTURE DEFINITIONS
+const firebaseConfig = {
+    apiKey: "AIzaSyCuB2izaoYMfr-olS3ImYL7Vw1OqkhMR5U",
+    authDomain: "qfy-leads-59c25.firebaseapp.com",
+    databaseURL: "https://qfy-leads-59c25-default-rtdb.firebaseio.com",
+    projectId: "qfy-leads-59c25",
+    storageBucket: "qfy-leads-59c25.firebasestorage.app",
+    messagingSenderId: "873319787899",
+    appId: "1:873319787899:web:3285832f2b5cda967c21de",
+    measurementId: "G-PQ108NT0YX"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+// STATE REGISTRATION VARIABLES TRACK
 let currentFilterCategory = 'all';
 let publicLeadsTrackingArray = [];
 
@@ -17,7 +33,6 @@ let publicLeadsTrackingArray = [];
 // APPLICATION COMPILER CONTROLLER SINGLE PAGE ROUTING ENGINE (SPA)
 // =========================================================================
 window.navigate = function(viewId) {
-    // Structural Visibility Mutation Interceptor
     document.querySelectorAll('.page-view').forEach(view => {
         view.classList.remove('active');
     });
@@ -28,17 +43,16 @@ window.navigate = function(viewId) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    // Adaptive Operational System Navigation Bars Visibility Mapping Interceptors
     const masterHeaderElement = document.getElementById('main-header');
     const primaryAppFooterElement = document.getElementById('global-application-footer');
     
     if (viewId === 'admin-dashboard-view') {
-        masterHeaderElement.style.display = 'none';
-        primaryAppFooterElement.style.display = 'none';
+        if(masterHeaderElement) masterHeaderElement.style.display = 'none';
+        if(primaryAppFooterElement) primaryAppFooterElement.style.display = 'none';
         loadAdminDashboardData();
     } else {
-        masterHeaderElement.style.display = 'flex';
-        primaryAppFooterElement.style.display = 'block';
+        if(masterHeaderElement) masterHeaderElement.style.display = 'flex';
+        if(primaryAppFooterElement) primaryAppFooterElement.style.display = 'block';
     }
 
     if (viewId === 'public-leads-view') {
@@ -52,14 +66,8 @@ window.navigate = function(viewId) {
 document.addEventListener("DOMContentLoaded", () => {
     const menuBtn = document.getElementById("menuBtn");
     const mobileMenu = document.getElementById("mobileMenu");
-    const loader = document.getElementById("loader");
     const progressBar = document.getElementById("progressBar");
     const scrollTopBtn = document.getElementById("scrollTop");
-
-    // Close Mobile Menu overlay if navigation target choice occurs
-    mobileMenu.querySelectorAll("a").forEach(link => {
-        link.addEventListener("click", () => mobileMenu.classList.remove("show"));
-    });
 
     if (menuBtn && mobileMenu) {
         menuBtn.addEventListener("click", (e) => {
@@ -69,15 +77,6 @@ document.addEventListener("DOMContentLoaded", () => {
         document.addEventListener("click", () => mobileMenu.classList.remove("show"));
     }
 
-    // Micro Operational Loader Timeout Simulation Control Link
-    if (loader) {
-        setTimeout(() => {
-            loader.style.opacity = "0";
-            setTimeout(() => loader.style.display = "none", 500);
-        }, 1000);
-    }
-
-    // Navigation and Scrolling Metrics Dynamic Tracker UI updates
     window.addEventListener("scroll", () => {
         if (window.scrollY > 40) {
             document.getElementById("main-header")?.classList.add("sticky");
@@ -99,14 +98,12 @@ document.addEventListener("DOMContentLoaded", () => {
         window.scrollTo({ top: 0, behavior: "smooth" });
     });
 
-    // Onboarding Accordion Structural Actions Engine mapping loop
     document.querySelectorAll(".faq-question").forEach(item => {
         item.addEventListener("click", () => {
             item.parentElement?.classList.toggle("active");
         });
     });
 
-    // Compile Static Elements data tracks arrays mapping
     renderTestimonialsTrackSystem();
     observeAuthStateStatusTracking();
 });
@@ -115,16 +112,14 @@ document.addEventListener("DOMContentLoaded", () => {
 // REAL-TIME FIRESTORE RECEPTION PIPELINES & CARDS RENDERING LOGIC
 // =========================================================================
 function initializeRealtimePublicLeadsStream() {
-    const publicLeadsCollectionReference = collection(db, "leads");
-    
-    onSnapshot(publicLeadsCollectionReference, (querySnapshot) => {
+    onSnapshot(collection(db, "leads"), (querySnapshot) => {
         publicLeadsTrackingArray = [];
         querySnapshot.forEach((documentObject) => {
             publicLeadsTrackingArray.push({ id: documentObject.id, ...documentObject.data() });
         });
         renderPublicLeadsGridMatrix();
     }, (error) => {
-        console.error("Critical Fault Intaking Live Leads Array Block Pipeline Hook: ", error);
+        console.error("Fault Intaking Live Leads Array Block Pipeline Hook: ", error);
     });
 }
 
@@ -188,12 +183,12 @@ if (publicInboundContactFormTarget) {
         };
 
         try {
-            await addDoc(collection(db, "submissions"), pipelinePayloadDataBlock);
+            await addDoc(collection(db, "contact_submissions"), pipelinePayloadDataBlock);
             alert("Security transmission verified. Your operational inquiry parameters have been logged.");
             publicInboundContactFormTarget.reset();
         } catch (faultExceptionError) {
-            console.error("Critical Fault Dispatching Inbound Inquiries Payload Structural Object: ", faultExceptionError);
-            alert("Pipeline Connection Reset Fault. Verify network operational paths.");
+            console.error("Fault Dispatching Inbound Inquiries Payload Object: ", faultExceptionError);
+            alert("Pipeline Connection Reset Fault.");
         }
     });
 }
@@ -213,8 +208,8 @@ if (adminPortalLoginFormTarget) {
             adminPortalLoginFormTarget.reset();
             window.navigate("admin-dashboard-view");
         } catch (authenticationExceptionError) {
-            console.error("Portal Authentication Crypt Refusal Countered: ", authenticationExceptionError);
-            alert("Security Authentication Access Violation: Invalid identity signature keys parameters.");
+            console.error("Portal Authentication Refusal: ", authenticationExceptionError);
+            alert("Security Authentication Access Violation: Invalid identity signature keys.");
         }
     });
 }
@@ -226,7 +221,7 @@ if (portalLogoutTriggerActionNode) {
             await signOut(auth);
             window.navigate("home-view");
         } catch (logoutFaultException) {
-            console.error("Logout System Session Token Invalidation Error Event: ", logoutFaultException);
+            console.error("Logout System Session Token Invalidation Error: ", logoutFaultException);
         }
     });
 }
@@ -234,9 +229,7 @@ if (portalLogoutTriggerActionNode) {
 function observeAuthStateStatusTracking() {
     onAuthStateChanged(auth, (authenticatedUserNode) => {
         if (authenticatedUserNode) {
-            console.log("Admin Identity Cleared: Authenticated Active Token Context Session Established.");
-        } else {
-            console.log("Context Security Warning: Session Active Context State Unsigned Root Level.");
+            console.log("Admin Identity Cleared.");
         }
     });
 }
@@ -256,26 +249,22 @@ window.switchAdminTab = function(targetTabContentId) {
 };
 
 function loadAdminDashboardData() {
-    // Realtime Hooks initialization loop vectors for Dashboard Tabs Matrices
     onSnapshot(collection(db, "leads"), (querySnapshot) => {
         let leadsRecordsArray = [];
         querySnapshot.forEach(docObj => leadsRecordsArray.push({ id: docObj.id, ...docObj.data() }));
-        
         populateAdminLeadsInventoryInterface(leadsRecordsArray);
         compileDashboardMetricTrackCards(leadsRecordsArray, null);
     });
 
-    onSnapshot(collection(db, "submissions"), (querySnapshot) => {
+    onSnapshot(collection(db, "contact_submissions"), (querySnapshot) => {
         let submissionsRecordsArray = [];
         querySnapshot.forEach(docObj => submissionsRecordsArray.push({ id: docObj.id, ...docObj.data() }));
-        
         populateAdminInboundSubmissionsLogView(submissionsRecordsArray);
         renderKanbanPipelineControlBoard(submissionsRecordsArray);
         compileDashboardMetricTrackCards(null, submissionsRecordsArray);
     });
 }
 
-// Metric Compilation calculations mapping node updates
 let historicalLeadsCounterCache = 0;
 let historicalSubmissionsCounterCache = 0;
 
@@ -337,7 +326,7 @@ function populateAdminInboundSubmissionsLogView(submissionsDataPool) {
                 <td style="font-weight: 600; color: #1e293b;">${submission.name || 'Anonymous Prospect'}</td>
                 <td><a href="mailto:${submission.email}" style="color: #184e92; text-decoration:none;">${submission.email || 'N/A'}</a></td>
                 <td>${submission.phone || 'N/A'}</td>
-                <td style="max-width: 300px; white-space: nowrap; overflow: hidden; text-transform: ellipsis;" title="${submission.message}">${submission.message || 'No structural context message block specified.'}</td>
+                <td style="max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${submission.message}">${submission.message || 'No context message block specified.'}</td>
                 <td style="font-size: 12px; color: #64748b;">${parsingTimestampString}</td>
             </tr>
         `;
@@ -360,7 +349,6 @@ function renderKanbanPipelineControlBoard(submissionsDataPool) {
         won: document.getElementById("count-won")
     };
 
-    // Diagnostics clearing loops vectors
     Object.values(columnsPipelinesSelectorsMappingNodes).forEach(column => { if (column) column.innerHTML = ""; });
     Object.values(countLabelsSelectorsMappingNodes).forEach(label => { if (label) label.innerText = "0"; });
 
@@ -425,8 +413,8 @@ if (crmLeadAdditionExecutionFormTarget) {
             crmLeadAdditionExecutionFormTarget.reset();
             closeAddLeadModal();
         } catch (insertionFaultException) {
-            console.error("Critical Failure Injecting Structural Document Record Instance Block: ", insertionFaultException);
-            alert("Security Ledger Refusal Error Encountered. Verify access authority tokens parameters context.");
+            console.error("Failure Injecting Document Record: ", insertionFaultException);
+            alert("Security Ledger Refusal Error Encountered.");
         }
     });
 }
@@ -437,22 +425,22 @@ window.deleteLeadRecordStructure = async function(documentRecordIdentifierKey) {
         await deleteDoc(doc(db, "leads", documentRecordIdentifierKey));
         alert("Lead record deleted successfully.");
     } catch (deletionExceptionError) {
-        console.error("Critical Failure Processing Target Record Set Erasure Sequence: ", deletionExceptionError);
+        console.error("Failure Processing Target Record Erasure: ", deletionExceptionError);
     }
 };
 
 window.updatePipelineNodeRouteState = async function(documentRecordIdentifierKey, targetStateTransitionToken) {
     try {
-        const structuralTargetDocumentReference = doc(db, "submissions", documentRecordIdentifierKey);
+        const structuralTargetDocumentReference = doc(db, "contact_submissions", documentRecordIdentifierKey);
         await updateDoc(structuralTargetDocumentReference, { status: targetStateTransitionToken });
-        console.log(`State Route Mutation Successfully Committed to Firebase Pipeline: Node ID [${documentRecordIdentifierKey}] State -> ${targetStateTransitionToken}`);
+        console.log(`State Route Mutation Committed: Node ID [${documentRecordIdentifierKey}] State -> ${targetStateTransitionToken}`);
     } catch (pipelineMutationFaultException) {
-        console.error("Critical Mutation Refusal Intercepted from Database Engine System Loop: ", pipelineMutationFaultException);
+        console.error("Mutation Refusal Intercepted from Database Engine System Loop: ", pipelineMutationFaultException);
     }
 };
 
 // =========================================================================
-// CORE HARDCODED COMPREHENSIVE DATA TRACK RENDERING UTILITIES
+// TESTIMONIALS ROLLING TIMEOUT MATRIX
 // =========================================================================
 function renderTestimonialsTrackSystem() {
     const dynamicTestimonialTrackTargetNode = document.getElementById("testimonialTrack");
@@ -480,7 +468,6 @@ function renderTestimonialsTrackSystem() {
         </div>
     `).join("");
 
-    // Initialize Testimonials Carousel Execution Logic Track Loop Controllers Parameters
     let visualActivePointerIndexValue = 0;
     const clickNextActionControlTriggerNode = document.querySelector(".next");
     const clickPrevActionControlTriggerNode = document.querySelector(".prev");
