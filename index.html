@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -51,7 +50,7 @@
 
         html {
             scroll-behavior: smooth;
-            overflow-x: hidden; /* Mobile View Fix */
+            overflow-x: hidden; 
         }
 
         body {
@@ -124,13 +123,15 @@
         }
 
         /* System Pages View Utility Fix */
-        .page-view { display: none; width: 100%; }
+        .page-view { display: none; width: 100%; animation: fadeIn 0.4s ease-in-out; }
         .page-view.active { display: block; }
-        #contact-view.active, #admin-login-view.active { display: flex; justify-content: center; align-items: center; min-height: 80vh; padding-top: 100px; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        #contact-view.active, #admin-login-view.active { display: flex; flex-direction: column; justify-content: flex-start; align-items: center; min-height: 80vh; padding-top: 100px; }
         #admin-dashboard-view.active { display: flex; flex-direction: column; padding: 120px 7% 60px; }
 
         /* ==========================================================================
-           03. CORE UI COMPONENTS (LOADER, PROGRESS, SCROLL, FLOATING SHAPES)
+           03. CORE UI COMPONENTS
            ========================================================================== */
         #loader {
             position: fixed;
@@ -211,7 +212,7 @@
         .reveal { opacity: 0; transform: translateY(40px); transition: 1s cubic-bezier(0.4, 0, 0.2, 1); }
         .reveal.active { opacity: 1; transform: translateY(0); }
 
-        /* Floating Shapes Graphic Background Elements */
+        /* Floating Shapes */
         .shape { position: absolute; border-radius: 50%; opacity: .12; animation: float 8s infinite ease-in-out; pointer-events: none; }
         .shape1 { width: 160px; height: 160px; background: #6dd6ff; top: 120px; right: 10%; }
         .shape2 { width: 80px; height: 80px; background: var(--white); bottom: 15%; left: 8%; animation-delay: 2s; }
@@ -264,6 +265,7 @@
             transition: var(--transition);
         }
 
+        #main-header nav a.active { color: var(--accent); }
         #main-header nav a:hover { color: var(--accent); }
 
         .contact-btn {
@@ -429,7 +431,30 @@
             line-height: 1.7;
         }
 
-        /* Leads Grid Styles */
+        /* Leads Grid & Filter Styles */
+        .filter-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-input, .filter-select {
+            padding: 14px 20px;
+            border: 1px solid #ccc;
+            border-radius: 25px;
+            outline: none;
+            font-family: inherit;
+            font-size: 15px;
+            transition: var(--transition);
+        }
+        
+        .filter-input { width: 100%; max-width: 400px; }
+        .filter-select { min-width: 200px; cursor: pointer; background: var(--white); }
+        .filter-input:focus, .filter-select:focus { border-color: var(--accent-dark); box-shadow: 0 0 0 4px rgba(33, 89, 168, 0.11); }
+
         #public-leads-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -703,7 +728,7 @@
         /* ==========================================================================
            13. CLIENT TESTIMONIALS SLIDER
            ========================================================================== */
-        .testimonials { padding: 100px 7%; background: var(--white); overflow: hidden; width: 100%; }
+        .testimonials { padding: 100px 7%; background: var(--bg-alt); overflow: hidden; width: 100%; }
         .testimonial-slider { position: relative; overflow: hidden; padding: 20px 0; width: 100%; }
         .testimonial-track { display: flex; gap: 25px; transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); width: max-content; }
         
@@ -758,17 +783,8 @@
         .counter-box h3 { font-size: 16px; font-weight: 500; opacity: 0.95; text-transform: uppercase; letter-spacing: 0.5px; }
 
         /* ==========================================================================
-           15. FOOTER ARCHITECTURE
+           15. ADMIN DASHBOARD & CRM UI
            ========================================================================== */
-        footer { background: var(--primary-dark); color: #dbe8ff; padding: 80px 7% 30px; width: 100%; }
-        .footer-grid { display: grid; grid-template-columns: 1.5fr 0.8fr 0.9fr 0.8fr; gap: 40px; margin-bottom: 60px; }
-        .footer-grid h3 { margin-bottom: 25px; color: var(--white); font-size: 18px; font-weight: 700; }
-        .footer-grid p { font-size: 14px; line-height: 1.7; opacity: 0.85; }
-        .footer-grid a { display: block; color: #dbe8ff; text-decoration: none; margin-bottom: 14px; font-size: 14px; opacity: 0.85; transition: var(--transition); cursor: pointer; }
-        .footer-grid a:hover { color: var(--white); padding-left: 6px; opacity: 1; }
-        .footer-bottom { border-top: 1px solid rgba(255, 255, 255, .12); padding-top: 30px; text-align: center; font-size: 14px; opacity: 0.7; }
-
-        /* Admin Login and Dashboard Simple CSS Styles */
         .admin-box { background: var(--bg-light); padding: 40px; border-radius: var(--radius-lg); box-shadow: var(--shadow-md); max-width: 400px; width: 100%; margin: auto; text-align: center; border: 1px solid #e2e8f0;}
         .admin-box h2 { color: var(--primary); margin-bottom: 20px; font-weight: 700; }
         .admin-box input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #cbd5e1; border-radius: var(--radius-sm); outline: none; }
@@ -814,6 +830,8 @@
         @media (max-width: 768px) {
             .testimonial-card { min-width: 100%; max-width: 100%; }
             .slider-btn { display: none; }
+            .filter-container { flex-direction: column; }
+            .filter-input, .filter-select { max-width: 100%; }
         }
 
         @media (max-width: 600px) {
@@ -823,6 +841,16 @@
             .contact-form { padding: 25px; }
             .blue-box { padding: 30px; }
         }
+        
+        /* FOOTER */
+        footer { background: var(--primary-dark); color: #dbe8ff; padding: 80px 7% 30px; width: 100%; }
+        .footer-grid { display: grid; grid-template-columns: 1.5fr 0.8fr 0.9fr 0.8fr; gap: 40px; margin-bottom: 60px; }
+        .footer-grid h3 { margin-bottom: 25px; color: var(--white); font-size: 18px; font-weight: 700; }
+        .footer-grid p { font-size: 14px; line-height: 1.7; opacity: 0.85; }
+        .footer-grid a { display: block; color: #dbe8ff; text-decoration: none; margin-bottom: 14px; font-size: 14px; opacity: 0.85; transition: var(--transition); cursor: pointer; }
+        .footer-grid a:hover { color: var(--white); padding-left: 6px; opacity: 1; }
+        .footer-bottom { border-top: 1px solid rgba(255, 255, 255, .12); padding-top: 30px; text-align: center; font-size: 14px; opacity: 0.7; }
+
     </style>
 </head>
 
@@ -836,10 +864,10 @@
     <header id="main-header">
         <div class="logo" onclick="window.navigate('home-view')">Qfy <span>Leads</span></div>
         <nav>
-            <a onclick="window.navigate('home-view')">Home</a>
-            <a onclick="window.navigate('public-leads-view')">Leads</a>
-            <a onclick="window.navigate('service-view')">Services</a>
-            <a onclick="window.navigate('about-view')">About</a>
+            <a onclick="window.navigate('home-view')" class="nav-link active" data-target="home-view">Home</a>
+            <a onclick="window.navigate('public-leads-view')" class="nav-link" data-target="public-leads-view">Leads</a>
+            <a onclick="window.navigate('service-view')" class="nav-link" data-target="service-view">Services</a>
+            <a onclick="window.navigate('about-view')" class="nav-link" data-target="about-view">About</a>
         </nav>
         <a onclick="window.navigate('contact-view')" class="contact-btn">Contact</a>
 
@@ -862,7 +890,7 @@
             <div class="shape shape2"></div>
             <div class="shape shape3"></div>
 
-            <div class="hero-container">
+            <div class="hero-container reveal">
                 <div class="hero-left">
                     <h1>Unlock The Magic Of <span>High Converting Leads</span></h1>
                     <p>Generate premium, TCPA-compliant, verified business leads that help you grow faster with better conversions and predictable sales.</p>
@@ -892,263 +920,84 @@
             </div>
         </section>
 
-        <section class="benefits">
+        <section class="benefits reveal">
             <div class="section-title">
                 <h2>Buy High-Quality Leads For Your Business</h2>
-                <p>High-converting verified leads designed to increase your sales.</p>
+                <p>High-converting verified leads designed to increase your sales pipeline securely and predictably.</p>
             </div>
-    
+
             <div class="benefit-grid">
                 <div class="benefit-card">
                     <i class="fa-solid fa-bolt"></i>
                     <h3>Fast Delivery</h3>
-                    <p>Receive leads instantly after campaign activation.</p>
+                    <p>Receive leads instantly after campaign activation. Plug directly into your CRM for seamless calling.</p>
                 </div>
                 <div class="benefit-card">
                     <i class="fa-solid fa-circle-check"></i>
                     <h3>Verified Data</h3>
-                    <p>Every lead passes quality and compliance checks.</p>
+                    <p>Every lead passes multiple quality and compliance checks to ensure top tier contact rates.</p>
                 </div>
                 <div class="benefit-card">
                     <i class="fa-solid fa-shield"></i>
                     <h3>TCPA Compliant</h3>
-                    <p>Built according to industry standards.</p>
+                    <p>Built according to strict industry standards. We prioritize safety and regulatory compliance.</p>
                 </div>
                 <div class="benefit-card">
                     <i class="fa-solid fa-chart-line"></i>
                     <h3>Higher ROI</h3>
-                    <p>More conversions with better quality prospects.</p>
+                    <p>More conversions with better quality prospects meaning lower acquisition costs for your team.</p>
                 </div>
             </div>
         </section>
 
+        <section class="counter-section reveal">
+            <div class="counter-grid">
+                <div class="counter-box">
+                    <div class="counter">5.2M+</div>
+                    <h3>Leads Generated</h3>
+                </div>
+                <div class="counter-box">
+                    <div class="counter">98%</div>
+                    <h3>Client Retention</h3>
+                </div>
+                <div class="counter-box">
+                    <div class="counter">12+</div>
+                    <h3>Industries Served</h3>
+                </div>
+                <div class="counter-box">
+                    <div class="counter">24/7</div>
+                    <h3>Expert Support</h3>
+                </div>
+            </div>
+        </section>
+        
         <section class="testimonials reveal">
             <div class="section-title">
                 <h2>What Our Clients Say</h2>
-                <p>Trusted by businesses across multiple industries.</p>
+                <p>Trusted by businesses across multiple industries worldwide.</p>
             </div>
-    
+
             <div class="testimonial-slider">
                 <button class="slider-btn prev" aria-label="Previous slide">
                     <i class="fa-solid fa-chevron-left"></i>
                 </button>
-    
                 <div class="testimonial-track" id="testimonialTrack">
-                </div>
-    
+                    </div>
                 <button class="slider-btn next" aria-label="Next slide">
                     <i class="fa-solid fa-chevron-right"></i>
                 </button>
             </div>
         </section>
-    </div>
 
-    <div id="public-leads-view" class="page-view">
-        <section class="section">
-            <div class="section-title">
-                <h2>Verified Active Leads</h2>
-                <p>Browse our live and fresh multi-industry data infrastructure logs.</p>
-            </div>
-            
-            <div style="display: flex; gap: 15px; justify-content: center; align-items: center; max-width: 600px; margin: 0 auto 30px; flex-wrap: wrap;">
-                <input type="text" id="lead-search-input" oninput="window.filterPublicLeads()" placeholder="Search leads..." style="flex: 1; min-width: 200px; padding: 12px 20px; border: 1px solid #ccc; border-radius: 25px; outline: none;">
-                
-                <select id="lead-category-filter" onchange="window.filterPublicLeads()" style="padding: 12px 20px; border: 1px solid #ccc; border-radius: 25px; outline: none; background: white; min-width: 150px; cursor: pointer;">
-                    <option value="">All Categories</option>
-                    <option value="Legal">Legal</option>
-                    <option value="Healthcare">Healthcare</option>
-                    <option value="Finance">Finance</option>
-                    <option value="Home Improvement">Home Improvement</option>
-                    <option value="Education">Education</option>
-                    <option value="Manufacturing">Manufacturing</option>
-                    <option value="Insurance">Insurance</option>
-                    <option value="Technology">Technology</option>
-                </select>
-            </div>
-            <div style="text-align: center;">
-                <div id="lead-results-summary" style="margin-top: 10px; color: var(--text-muted); font-size: 14px;"></div>
-            </div>
-            
-            <div id="public-leads-grid"></div>
-        </section>
-    </div>
-
-    <div id="service-view" class="page-view">
-        <section class="section industries">
-            <div class="section-title">
-                <h2>Industries We Serve</h2>
-                <p>Performance-driven lead generation across multiple high-converting industries.</p>
-            </div>
-
-            <div class="industry-grid">
-                <div class="industry-card">
-                    <i class="fa-solid fa-scale-balanced"></i>
-                    <h3>Legal</h3>
-                    <p>Mass Tort, Personal Injury, Employment and Consumer Leads.</p>
-                </div>
-                <div class="industry-card">
-                    <i class="fa-solid fa-heart-pulse"></i>
-                    <h3>Healthcare</h3>
-                    <p>Medical, Medicare, Insurance and Patient Acquisition.</p>
-                </div>
-                <div class="industry-card">
-                    <i class="fa-solid fa-building-columns"></i>
-                    <h3>Finance</h3>
-                    <p>MCA, Loans, Credit Repair, Debt Relief and Banking.</p>
-                </div>
-                <div class="industry-card">
-                    <i class="fa-solid fa-house"></i>
-                    <h3>Home Improvement</h3>
-                    <p>Roofing, Windows, Solar, HVAC and Remodeling.</p>
-                </div>
-                <div class="industry-card">
-                    <i class="fa-solid fa-graduation-cap"></i>
-                    <h3>Education</h3>
-                    <p>Universities, Online Courses and Student Leads.</p>
-                </div>
-                <div class="industry-card">
-                    <i class="fa-solid fa-industry"></i>
-                    <h3>Manufacturing</h3>
-                    <p>B2B Manufacturing and Industrial Sales Leads.</p>
-                </div>
-                <div class="industry-card">
-                    <i class="fa-solid fa-shield-halved"></i>
-                    <h3>Insurance</h3>
-                    <p>Auto, Health, Medicare, Life and Home Insurance.</p>
-                </div>
-                <div class="industry-card">
-                    <i class="fa-solid fa-microchip"></i>
-                    <h3>Technology</h3>
-                    <p>Software, SaaS, AI and Enterprise IT Solutions.</p>
-                </div>
-            </div>
-        </section>
-    </div>
-
-    <div id="about-view" class="page-view">
-        <section class="about-company">
-            <div class="about-wrapper">
-                <div class="about-image">
-                    <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=1200" alt="About Corporate Strategy">
-                </div>
-    
-                <div class="about-text">
-                    <span>Who We Are</span>
-                    <h2>A Team Focused on Predictable Lead Growth</h2>
-                    <p>QFY Leads helps businesses generate premium verified leads through AI-powered marketing, real-time targeting, and data-driven campaigns.</p>
-                    <p>We work with agencies, startups and enterprises across healthcare, legal, finance, education, insurance and technology industries.</p>
-                    <a onclick="window.navigate('contact-view')" class="about-btn">Learn More</a>
-                </div>
-            </div>
-        </section>
-
-        <section class="section steps">
-            <div class="section-title">
-                <h2>How It Works</h2>
-                <p>A simple process designed to help you receive quality leads quickly.</p>
-            </div>
-
-            <div class="steps-grid">
-                <div class="step-card">
-                    <div class="step-number">1</div>
-                    <h3>Select Lead Type</h3>
-                    <p>Choose the business category that matches your campaign.</p>
-                </div>
-                <div class="step-card">
-                    <div class="step-number">2</div>
-                    <h3>Apply Targeting</h3>
-                    <p>Select geography, demographics and customer preferences.</p>
-                </div>
-                <div class="step-card">
-                    <div class="step-number">3</div>
-                    <h3>Generate Leads</h3>
-                    <p>Our AI and marketing systems collect verified prospects.</p>
-                </div>
-                <div class="step-card">
-                    <div class="step-number">4</div>
-                    <h3>Verify Quality</h3>
-                    <p>Every lead is checked before delivery.</p>
-                </div>
-                <div class="step-card">
-                    <div class="step-number">5</div>
-                    <h3>Scale Faster</h3>
-                    <p>Receive leads instantly and grow your sales pipeline.</p>
-                </div>
-            </div>
-        </section>
-
-        <section class="section why">
-            <div class="why-wrapper">
-                <div class="features">
-                    <div class="feature">
-                        <i class="fa-solid fa-circle-check"></i>
-                        <div>
-                            <h4>100% TCPA Compliant</h4>
-                            <p>Every campaign follows industry standards and compliance.</p>
-                        </div>
-                    </div>
-                    <div class="feature">
-                        <i class="fa-solid fa-location-dot"></i>
-                        <div>
-                            <h4>Real-Time Lead Delivery</h4>
-                            <p>Receive fresh, high-intent prospects within minutes.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="blue-box">
-                    <h2>Built for High-Converting Campaigns</h2>
-                    <p>We combine AI, performance marketing and verified consumer data to deliver scalable lead generation solutions.</p>
-                </div>
-            </div>
-        </section>
-
-        <section class="faq">
-            <div class="section-title">
-                <h2>Frequently Asked Questions</h2>
-                <p>Everything you need to know before buying leads.</p>
-            </div>
-    
-            <div class="faq-item">
-                <div class="faq-question">
-                    How quickly will I receive my leads?
-                    <span>+</span>
-                </div>
-                <div class="faq-answer">
-                    Most campaigns begin delivering verified leads within minutes after approval.
-                </div>
-            </div>
-    
-            <div class="faq-item">
-                <div class="faq-question">
-                    Are your leads exclusive?
-                    <span>+</span>
-                </div>
-                <div class="faq-answer">
-                    Yes. We provide exclusive and shared lead options depending on your campaign.
-                </div>
-            </div>
-    
-            <div class="faq-item">
-                <div class="faq-question">
-                    Can I target specific locations?
-                    <span>+</span>
-                </div>
-                <div class="faq-answer">
-                    Yes. You can target by city, state, ZIP code, age, income and many other filters.
-                </div>
-            </div>
-        </section>
-    </div>
-
-    <div id="contact-view" class="page-view">
-        <section class="contact">
+        <section class="contact reveal">
             <div class="contact-wrapper">
                 <div class="contact-info">
-                    <h2>Unlock High-Converting Verified Leads</h2>
-                    <p>Ready to grow your business? Let's build a lead generation strategy tailored to your goals.</p>
+                    <h2>Ready To Scale Your Sales?</h2>
+                    <p>Get in touch with our experts today. Let's build a lead generation strategy specifically tailored to your conversion goals.</p>
                     <div class="contact-list">
                         <div><i class="fa-solid fa-phone"></i><span>+91 9876543210</span></div>
                         <div><i class="fa-solid fa-envelope"></i><span>info@qfyleads.com</span></div>
+                        <div><i class="fa-solid fa-location-dot"></i><span>India</span></div>
                     </div>
                 </div>
 
@@ -1156,25 +1005,294 @@
                     <input type="text" name="name" placeholder="Full Name" required>
                     <input type="email" name="email" placeholder="Email Address" required>
                     <input type="text" name="phone" placeholder="Phone Number" required>
-                    <textarea name="message" rows="5" placeholder="Your Message" required></textarea>
-                    <button type="submit">Send Message</button>
+                    <textarea name="message" rows="5" placeholder="Tell us about your lead requirements" required></textarea>
+                    <button type="submit">Send Message Now</button>
+                </form>
+            </div>
+        </section>
+    </div>
+
+    <div id="public-leads-view" class="page-view">
+        <section class="section" style="padding-top: 150px; min-height: 80vh;">
+            <div class="section-title reveal">
+                <h2>Verified Active Leads Database</h2>
+                <p>Browse our live and fresh multi-industry data infrastructure logs. Use the tools below to filter the precise demographic you need.</p>
+            </div>
+            
+            <div class="filter-container reveal">
+                <input type="text" id="lead-search-input" class="filter-input" oninput="window.filterPublicLeads()" placeholder="Search keywords (e.g. Solar, Debt)...">
+                
+                <select id="lead-category-filter" class="filter-select" onchange="window.filterPublicLeads()">
+                    <option value="all">All Categories</option>
+                    <option value="Legal">Legal & Mass Tort</option>
+                    <option value="Healthcare">Healthcare & Medical</option>
+                    <option value="Finance">Finance & Debt</option>
+                    <option value="Home Improvement">Home Improvement</option>
+                    <option value="Education">Education</option>
+                    <option value="Insurance">Insurance</option>
+                </select>
+            </div>
+            
+            <div id="lead-results-summary" style="text-align: center; margin-bottom: 20px; color: var(--text-muted); font-size: 15px;"></div>
+            
+            <div id="public-leads-grid" class="reveal">
+                <div style="text-align:center; grid-column: 1/-1; padding: 40px; color: #666;">
+                    <i class="fa-solid fa-spinner fa-spin" style="font-size: 24px; margin-bottom: 10px;"></i><br>
+                    Connecting to live lead database...
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div id="service-view" class="page-view">
+        <section class="section industries" style="padding-top: 150px;">
+            <div class="section-title reveal">
+                <h2>Industries We Serve</h2>
+                <p>Performance-driven lead generation across multiple high-converting industries. We specialize in providing targeted consumer data.</p>
+            </div>
+
+            <div class="industry-grid reveal">
+                <div class="industry-card">
+                    <i class="fa-solid fa-scale-balanced"></i>
+                    <h3>Legal & Mass Tort</h3>
+                    <p>Mass Tort, Personal Injury, Employment Law, MVA, and Consumer Protection Leads. Highly vetted for intent.</p>
+                </div>
+                <div class="industry-card">
+                    <i class="fa-solid fa-heart-pulse"></i>
+                    <h3>Healthcare</h3>
+                    <p>Medical Devices, Medicare, Health Insurance Supplements, and Patient Acquisition. Fully HIPAA compliant.</p>
+                </div>
+                <div class="industry-card">
+                    <i class="fa-solid fa-building-columns"></i>
+                    <h3>Finance & Debt</h3>
+                    <p>MCA, Personal Loans, Credit Repair, Debt Settlement, Tax Relief, and Mortgage Refinancing.</p>
+                </div>
+                <div class="industry-card">
+                    <i class="fa-solid fa-house"></i>
+                    <h3>Home Improvement</h3>
+                    <p>Roofing, Windows, Solar Installations, HVAC upgrades, and Full Home Remodeling prospects.</p>
+                </div>
+                <div class="industry-card">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                    <h3>Education</h3>
+                    <p>Universities, Trade Schools, Online Certification Courses, and Student Loan Consolidation Leads.</p>
+                </div>
+                <div class="industry-card">
+                    <i class="fa-solid fa-industry"></i>
+                    <h3>Manufacturing</h3>
+                    <p>B2B Manufacturing, Logistics, Supply Chain, and High-ticket Industrial Sales Leads.</p>
+                </div>
+                <div class="industry-card">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <h3>Insurance</h3>
+                    <p>Auto, Final Expense, Health, Medicare Advantage, Life Insurance, and Homeowners policies.</p>
+                </div>
+                <div class="industry-card">
+                    <i class="fa-solid fa-microchip"></i>
+                    <h3>Technology</h3>
+                    <p>Software demos, SaaS subscriptions, IT Infrastructure, Cyber Security, and Enterprise IT Solutions.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section steps reveal">
+            <div class="section-title">
+                <h2>Lead Delivery Methods</h2>
+                <p>Seamlessly integrate our data directly into your existing sales pipeline.</p>
+            </div>
+            <div class="why-wrapper" style="gap: 30px;">
+                <div class="feature" style="flex-direction: column; text-align: center; align-items: center;">
+                    <i class="fa-solid fa-code-compare" style="font-size: 40px; margin-bottom:15px;"></i>
+                    <h4>Direct API Post</h4>
+                    <p>Real-time delivery straight to your custom CRM or dialer software via secure HTTP POST protocols.</p>
+                </div>
+                <div class="feature" style="flex-direction: column; text-align: center; align-items: center;">
+                    <i class="fa-solid fa-file-csv" style="font-size: 40px; margin-bottom:15px;"></i>
+                    <h4>Batch CSV / Excel</h4>
+                    <p>Secure daily, weekly, or monthly batch file drops delivered straight to your email or secure FTP server.</p>
+                </div>
+                <div class="feature" style="flex-direction: column; text-align: center; align-items: center;">
+                    <i class="fa-solid fa-phone-volume" style="font-size: 40px; margin-bottom:15px;"></i>
+                    <h4>Live Transfers</h4>
+                    <p>Warm handoffs from our US-based call center directly to your closing agents for maximum conversion.</p>
+                </div>
+            </div>
+        </section>
+        
+        <section class="faq reveal">
+            <div class="section-title">
+                <h2>Service FAQs</h2>
+                <p>Common questions regarding our data services and lead processing.</p>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Are your leads exclusive?<span>+</span></div>
+                <div class="faq-answer">Yes, we provide both exclusive and shared lead options depending on your campaign budget. Exclusive leads are never sold to another buyer.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">Can I target specific geographical locations?<span>+</span></div>
+                <div class="faq-answer">Absolutely. Our system allows granular targeting by state, city, ZIP code, area code, and various demographic filters like age or income.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">Do you offer replacement policies for bad leads?<span>+</span></div>
+                <div class="faq-answer">Yes, we maintain a strict quality control policy. Invalid numbers, disconnected lines, or out-of-criteria leads can be returned for credit within a specified timeframe.</div>
+            </div>
+        </section>
+    </div>
+
+    <div id="about-view" class="page-view">
+        <section class="about-company reveal" style="padding-top: 150px;">
+            <div class="about-wrapper">
+                <div class="about-image">
+                    <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=1200" alt="About Corporate Strategy">
+                </div>
+                <div class="about-text">
+                    <span>Who We Are</span>
+                    <h2>A Team Focused on Predictable Lead Growth</h2>
+                    <p>QFY Leads helps businesses generate premium verified leads through AI-powered marketing, real-time targeting, and data-driven digital campaigns.</p>
+                    <p>With years of performance marketing experience, we work side-by-side with agencies, startups, and enterprise operations across healthcare, legal, finance, education, insurance, and technology industries. Our mission is to bridge the gap between high-intent consumers and the businesses ready to serve them.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section steps reveal">
+            <div class="section-title">
+                <h2>Our Acquisition Process</h2>
+                <p>A transparent, simple process designed to help you receive quality leads quickly.</p>
+            </div>
+            <div class="steps-grid">
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <h3>Select Lead Type</h3>
+                    <p>Choose the business category that perfectly matches your current campaign.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <h3>Apply Targeting</h3>
+                    <p>Select geography, demographics and granular customer preferences.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <h3>Generate Traffic</h3>
+                    <p>Our proprietary AI and marketing systems collect verified inbound prospects.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">4</div>
+                    <h3>Verify Quality</h3>
+                    <p>Every single lead is rigorously checked for compliance before delivery.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">5</div>
+                    <h3>Scale Faster</h3>
+                    <p>Receive leads instantly and watch your sales pipeline grow predictably.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section why reveal">
+            <div class="section-title">
+                <h2>Why Top Agencies Choose Us</h2>
+                <p>We pride ourselves on providing the foundation for scalable revenue.</p>
+            </div>
+            <div class="why-wrapper">
+                <div class="features">
+                    <div class="feature">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <div>
+                            <h4>100% TCPA Compliant Data</h4>
+                            <p>We leverage Jornaya and ActiveProspect TrustedForm certificates on our web properties to ensure ultimate compliance.</p>
+                        </div>
+                    </div>
+                    <div class="feature">
+                        <i class="fa-solid fa-location-dot"></i>
+                        <div>
+                            <h4>Real-Time Delivery</h4>
+                            <p>Speed to lead is critical. You receive fresh, high-intent prospects within seconds of form submission.</p>
+                        </div>
+                    </div>
+                    <div class="feature">
+                        <i class="fa-solid fa-headset"></i>
+                        <div>
+                            <h4>Dedicated Account Support</h4>
+                            <p>You aren't just buying leads; you gain a dedicated account manager focused on optimizing your specific campaign.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="blue-box">
+                    <h2>Built for High-Converting Campaigns</h2>
+                    <p>We combine massive search intent, social media performance marketing, and verified consumer data validation to deliver highly scalable lead generation solutions.</p>
+                    <p style="margin-top: 15px;">Whether you are a solo agent or a 500-seat call center, our infrastructure is built to support your growth.</p>
+                    <a onclick="window.navigate('contact-view')">Contact Sales</a>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div id="contact-view" class="page-view">
+        <section class="contact" style="min-height: 90vh; display: flex; align-items: center;">
+            <div class="contact-wrapper reveal" style="width: 100%;">
+                <div class="contact-info">
+                    <h2>Unlock High-Converting Verified Leads Today</h2>
+                    <p>Ready to grow your business? Let's build a lead generation strategy tailored to your exact goals. Fill out the form, and a dedicated data specialist will reach out within 24 hours.</p>
+                    
+                    <div class="contact-list" style="margin-top: 40px;">
+                        <div>
+                            <i class="fa-solid fa-phone" style="font-size: 24px; padding: 15px; background: rgba(255,255,255,0.1); border-radius:50%;"></i>
+                            <div>
+                                <span style="display:block; font-size:14px; opacity:0.8;">Call Us Directly</span>
+                                <span style="font-size: 18px; font-weight:700;">+91 9876543210</span>
+                            </div>
+                        </div>
+                        <div style="margin-top: 15px;">
+                            <i class="fa-solid fa-envelope" style="font-size: 24px; padding: 15px; background: rgba(255,255,255,0.1); border-radius:50%;"></i>
+                            <div>
+                                <span style="display:block; font-size:14px; opacity:0.8;">Email Support</span>
+                                <span style="font-size: 18px; font-weight:700;">info@qfyleads.com</span>
+                            </div>
+                        </div>
+                        <div style="margin-top: 15px;">
+                            <i class="fa-solid fa-location-dot" style="font-size: 24px; padding: 15px; background: rgba(255,255,255,0.1); border-radius:50%;"></i>
+                            <div>
+                                <span style="display:block; font-size:14px; opacity:0.8;">Headquarters</span>
+                                <span style="font-size: 18px; font-weight:700;">Mumbai, India</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <form class="contact-form" onsubmit="window.submitContactForm(event)">
+                    <h3 style="color: var(--primary); margin-bottom: 20px;">Request a Quote</h3>
+                    <input type="text" name="name" placeholder="Your Full Name" required>
+                    <input type="email" name="email" placeholder="Business Email Address" required>
+                    <input type="text" name="phone" placeholder="Phone Number" required>
+                    <select name="industry" style="width: 100%; padding: 15px 18px; margin-bottom: 20px; border: 1px solid #dddddd; border-radius: var(--radius-sm); font-size: 15px; color: var(--text-dark); background: #fafafa; outline: none;">
+                        <option value="" disabled selected>Select Your Industry</option>
+                        <option value="legal">Legal & Mass Tort</option>
+                        <option value="healthcare">Healthcare & Insurance</option>
+                        <option value="finance">Finance & Debt</option>
+                        <option value="home">Home Improvement</option>
+                        <option value="other">Other</option>
+                    </select>
+                    <textarea name="message" rows="5" placeholder="How many leads do you need per day/week? Any specific targeting?" required></textarea>
+                    <button type="submit">Submit Inquiry</button>
                 </form>
             </div>
         </section>
     </div>
 
     <div id="admin-login-view" class="page-view">
-        <div class="admin-box">
-            <h2>Admin Login</h2>
+        <div class="admin-box reveal">
+            <h2>Admin Secure Login</h2>
+            <p style="margin-bottom: 25px; color: var(--text-muted); font-size: 14px;">Please enter your authorized credentials to access the CRM.</p>
             <form onsubmit="window.checkLogin(event)">
                 <input type="email" id="admin-email" placeholder="Admin Email" required>
                 <input type="password" id="admin-password" placeholder="Password" required>
-                <button type="submit">Login</button>
+                <button type="submit">Access Dashboard</button>
             </form>
         </div>
     </div>
 
-   <div id="admin-dashboard-view" class="page-view">
+    <div id="admin-dashboard-view" class="page-view">
         <div style="display:flex; justify-content:space-between; align-items:center; width:100%; border-bottom:2px solid #edf2f7; padding-bottom:15px; margin-bottom:20px;">
             <h2>CRM Admin Control Panel</h2>
             <button onclick="window.logout()" style="background:#dc2626; color:white; border:none; padding:8px 16px; border-radius:5px; font-weight:600; cursor:pointer;">Logout</button>
@@ -1183,8 +1301,8 @@
             <div class="crm-sidebar">
                 <a id="nav-dash" onclick="window.switchAdminTab('dash')" class="active">Dashboard</a>
                 <a id="nav-leads" onclick="window.switchAdminTab('leads')">Manage Leads</a>
-                <a id="nav-contactforms" onclick="window.switchAdminTab('contactforms')">Contact Form Enquiries</a>
-                <a id="nav-users" onclick="window.switchAdminTab('users')">Lead Stage Tracker</a>
+                <a id="nav-contactforms" onclick="window.switchAdminTab('contactforms')">Contact Enquiries</a>
+                <a id="nav-users" onclick="window.switchAdminTab('users')">Lead Pipeline</a>
             </div>
             <div class="crm-content">
                 <div id="tab-dash">
@@ -1198,97 +1316,112 @@
                         <h3>Published Leads Matrix</h3>
                         <button onclick="window.openAddLeadModal()" style="background:var(--primary-light); color:white; border:none; padding:8px 14px; border-radius:4px; font-weight:600; cursor:pointer;">+ Add New Lead</button>
                     </div>
-                    <table class="crm-table">
-                        <thead>
-                            <tr><th>Title</th><th>Category</th><th>Status</th><th>Actions</th></tr>
-                        </thead>
-                        <tbody id="admin-published-leads-table"></tbody>
-                    </table>
+                    <div style="overflow-x: auto;">
+                        <table class="crm-table">
+                            <thead>
+                                <tr><th>Title</th><th>Category</th><th>Status</th><th>Actions</th></tr>
+                            </thead>
+                            <tbody id="admin-published-leads-table"></tbody>
+                        </table>
+                    </div>
                 </div>
                 
                 <div id="tab-contactforms" class="hidden">
-                    <h3>Contact Enquiry Submissions Logs</h3>
-                    <table class="crm-table">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Phone</th>
-                                <th>Message</th>
-                                <th>Status</th>
-                                <th>Update Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="admin-contact-forms-table">
-                            <tr><td colspan="6" style="text-align:center; padding:20px;">Loading active records...</td></tr>
-                        </tbody>
-                    </table>
+                    <h3>Contact Enquiry Submissions</h3>
+                    <div style="overflow-x: auto;">
+                        <table class="crm-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Message</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-contact-forms-table">
+                                <tr><td colspan="6" style="text-align:center; padding:20px;">Loading records...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <div id="tab-users" class="hidden">
-                    <h3>Lead Stage Pipeline </h3>
-                    <div style="display:grid; grid-template-columns: repeat(5, 1fr); gap:15px; margin-top:15px;">
-                        <div style="background:#f1f5f9; padding:10px; border-radius:6px;"><h4>NEW</h4><div id="kb-new"></div></div>
-                        <div style="background:#fef3c7; padding:10px; border-radius:6px;"><h4>CONTACTED</h4><div id="kb-contacted"></div></div>
-                        <div style="background:#f3e8ff; padding:10px; border-radius:6px;"><h4>IN PROGRESS</h4><div id="kb-inprogress"></div></div>
-                        <div style="background:#e6f4ea; padding:10px; border-radius:6px;"><h4>CONVERTED</h4><div id="kb-converted"></div></div>
-                        <div style="background:#fee2e2; padding:10px; border-radius:6px;"><h4>LOST</h4><div id="kb-lost"></div></div>
+                    <h3>Lead Stage Pipeline</h3>
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:15px; margin-top:15px;">
+                        <div style="background:#f1f5f9; padding:10px; border-radius:6px; min-height: 200px;"><h4>NEW</h4><div id="kb-new"></div></div>
+                        <div style="background:#fef3c7; padding:10px; border-radius:6px; min-height: 200px;"><h4>CONTACTED</h4><div id="kb-contacted"></div></div>
+                        <div style="background:#f3e8ff; padding:10px; border-radius:6px; min-height: 200px;"><h4>IN PROGRESS</h4><div id="kb-inprogress"></div></div>
+                        <div style="background:#e6f4ea; padding:10px; border-radius:6px; min-height: 200px;"><h4>CONVERTED</h4><div id="kb-converted"></div></div>
+                        <div style="background:#fee2e2; padding:10px; border-radius:6px; min-height: 200px;"><h4>LOST</h4><div id="kb-lost"></div></div>
                     </div>
-                </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <div id="add-lead-modal" class="hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); display:flex; justify-content:center; align-items:center; z-index:99999;">
-            <div class="admin-box" style="background:white; max-width:450px;">
-                <h3>Create New Public Lead Row</h3>
-                <form onsubmit="window.submitNewLead(event)" style="margin-top:15px;">
-                    <input type="text" id="modal-title" placeholder="Lead Title" required style="width:100%; margin-bottom:12px; padding:10px;">
-                    <input type="text" id="modal-cat" placeholder="Category (e.g., Finance, Legal)" required style="width:100%; margin-bottom:12px; padding:10px;">
-                    <textarea id="modal-desc" placeholder="Lead Description Detail Data Log" required style="width:100%; height:100px; margin-bottom:15px; padding:10px; border:1px solid #cbd5e1; border-radius:4px; outline:none; font-family:inherit;"></textarea>
-                    <div style="display:flex; gap:10px;">
-                        <button type="submit" style="background:green; flex:1;">Publish Lead</button>
-                        <button type="button" onclick="document.getElementById('add-lead-modal').classList.add('hidden')" style="background:grey; flex:1;">Cancel</button>
-                    </div>
-                </form>
-            </div>
+    <div id="add-lead-modal" class="hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); display:flex; justify-content:center; align-items:center; z-index:99999;">
+        <div class="admin-box" style="background:white; max-width:450px;">
+            <h3>Create New Lead Listing</h3>
+            <form onsubmit="window.submitNewLead(event)" style="margin-top:15px;">
+                <input type="text" id="modal-title" placeholder="Lead Title (e.g. Solar Pro)" required style="width:100%; margin-bottom:12px; padding:10px; border:1px solid #cbd5e1; border-radius:4px; outline:none;">
+                
+                <select id="modal-cat" required style="width:100%; margin-bottom:12px; padding:10px; border:1px solid #cbd5e1; border-radius:4px; outline:none; font-family:inherit;">
+                    <option value="" disabled selected>Select Category</option>
+                    <option value="Legal">Legal</option>
+                    <option value="Healthcare">Healthcare</option>
+                    <option value="Finance">Finance</option>
+                    <option value="Home Improvement">Home Improvement</option>
+                    <option value="Education">Education</option>
+                </select>
+
+                <textarea id="modal-desc" placeholder="Lead Description Detail Data Log" required style="width:100%; height:100px; margin-bottom:15px; padding:10px; border:1px solid #cbd5e1; border-radius:4px; outline:none; font-family:inherit;"></textarea>
+                <div style="display:flex; gap:10px;">
+                    <button type="submit" style="background:#16a34a; flex:1;">Publish Lead</button>
+                    <button type="button" onclick="document.getElementById('add-lead-modal').classList.add('hidden')" style="background:#64748b; flex:1;">Cancel</button>
+                </div>
+            </form>
         </div>
     </div>
 
     <footer>
         <div class="footer-grid">
             <div>
-                <h3>QFY Leads</h3>
-                <p style="margin-top: 10px;">Premium Lead Generation Company helping businesses generate predictable revenue through high-converting verified leads.</p>
-                <a onclick="window.navigate('admin-login-view')" style="display: inline-block; margin-top: 15px; padding: 8px 16px; background: rgba(255,255,255,0.1); border-radius: 4px; border: 1px solid rgba(255,255,255,0.2); font-weight: 600;"><i class="fa-solid fa-lock" style="margin-right:8px;"></i>Admin Dashboard</a>
+                <h3 style="font-size: 24px;">QFY Leads</h3>
+                <p style="margin-top: 10px;">Premium Lead Generation Company helping businesses generate predictable revenue through high-converting verified leads. Scale your sales with confidence.</p>
+                <a onclick="window.navigate('admin-login-view')" style="display: inline-block; margin-top: 20px; padding: 10px 18px; background: rgba(255,255,255,0.1); border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); font-weight: 600;"><i class="fa-solid fa-lock" style="margin-right:8px;"></i>Admin CRM Gateway</a>
             </div>
 
             <div>
                 <h3>Quick Links</h3>
                 <a onclick="window.navigate('home-view')">Home</a>
-                <a onclick="window.navigate('about-view')">About</a>
-                <a onclick="window.navigate('service-view')">Services</a>
-                <a onclick="window.navigate('contact-view')">Contact</a>
+                <a onclick="window.navigate('about-view')">About Us</a>
+                <a onclick="window.navigate('service-view')">Our Services</a>
+                <a onclick="window.navigate('public-leads-view')">Live Lead Data</a>
+                <a onclick="window.navigate('contact-view')">Contact Sales</a>
             </div>
 
             <div>
-                <h3>Industries</h3>
-                <a onclick="window.navigate('service-view')">Healthcare</a>
-                <a onclick="window.navigate('service-view')">Insurance</a>
-                <a onclick="window.navigate('service-view')">Finance</a>
-                <a onclick="window.navigate('service-view')">Legal</a>
+                <h3>Top Industries</h3>
+                <a onclick="window.navigate('service-view')">Mass Tort & Legal</a>
+                <a onclick="window.navigate('service-view')">Healthcare & Medicare</a>
+                <a onclick="window.navigate('service-view')">Finance & MCA</a>
+                <a onclick="window.navigate('service-view')">Home Improvement</a>
+                <a onclick="window.navigate('service-view')">Solar Installations</a>
             </div>
 
             <div>
-                <h3>Contact</h3>
-                <p style="margin-bottom: 10px;">+91 9876543210</p>
-                <p style="margin-bottom: 10px;">info@qfyleads.com</p>
-                <p>India</p>
+                <h3>Contact Info</h3>
+                <p style="margin-bottom: 12px;"><i class="fa-solid fa-phone" style="margin-right: 10px; color: var(--accent);"></i>+91 9876543210</p>
+                <p style="margin-bottom: 12px;"><i class="fa-solid fa-envelope" style="margin-right: 10px; color: var(--accent);"></i>info@qfyleads.com</p>
+                <p style="margin-bottom: 12px;"><i class="fa-solid fa-location-dot" style="margin-right: 10px; color: var(--accent);"></i>Mumbai, Maharashtra, India</p>
+                <p style="margin-top: 20px; font-size: 13px; opacity: 0.6;">Support Hours: Mon-Fri, 9AM-6PM EST</p>
             </div>
         </div>
 
         <div class="footer-bottom">
-            &copy; 2026 QFY Leads. All Rights Reserved.
+            &copy; 2026 QFY Leads. All Rights Reserved. Fully TCPA Compliant.
         </div>
     </footer>
 
@@ -1302,6 +1435,21 @@
     </a>
 
     <script>
+        // Ensure navigate function exists globally if app.js is slow or missing
+        window.navigate = window.navigate || function(targetViewId) {
+            document.querySelectorAll('.page-view').forEach(el => el.classList.remove('active'));
+            const target = document.getElementById(targetViewId);
+            if(target) target.classList.add('active');
+            
+            // Update active state in nav
+            document.querySelectorAll('#main-header nav a').forEach(el => {
+                if(el.getAttribute('data-target') === targetViewId) el.classList.add('active');
+                else el.classList.remove('active');
+            });
+            window.scrollTo({ top: 0, behavior: "smooth" });
+            reveal(); // trigger animations on new view
+        };
+
         const menuBtn = document.getElementById("menuBtn");
         const mobileMenu = document.getElementById("mobileMenu");
         const progressBar = document.getElementById("progressBar");
@@ -1371,15 +1519,19 @@
         // Scroll Reveal Animations Engine
         function reveal() {
             document.querySelectorAll(".reveal").forEach(box => {
-                const top = box.getBoundingClientRect().top;
-                if (top < window.innerHeight - 120) {
-                    box.classList.add("active");
+                // Ensure only elements in active view are checked to save performance
+                if(box.closest('.page-view.active') || !box.closest('.page-view')) {
+                    const top = box.getBoundingClientRect().top;
+                    if (top < window.innerHeight - 80) {
+                        box.classList.add("active");
+                    }
                 }
             });
         }
-        reveal();
+        // Run reveal once on start
+        setTimeout(reveal, 500); 
 
-        // Clients Data Array Structure (RESTORED FULL LIST)
+        // Restored Extended Clients Data Array
         const testimonials = [
             {
                 message: "QFY Leads helped us reach highly targeted insurance, medical, and telecom clients with excellent accuracy and compliance.",
@@ -1406,13 +1558,13 @@
                 location: "California, United States",
             },
             {
-                message: "Their intent-based targeting helped accelerate conversions across finance and debt-related services.",
+                message: "Their intent-based targeting helped accelerate conversions across finance and debt-related services tremendously.",
                 name: "Alex Frias",
                 role: "Investor & Entrepreneur, Hilldale Corp",
                 location: "United States",
             },
             {
-                message: "Reliable healthcare leads suitable for telemarketing and online outreach. Smooth coordination throughout.",
+                message: "Reliable healthcare leads suitable for telemarketing and online outreach. Smooth coordination throughout our scaling phase.",
                 name: "Jonatan Arano",
                 role: "General Manager, Trusted Medical Providers",
                 location: "Los Angeles Metro Area",
@@ -1457,9 +1609,12 @@
 
             // Loop Slider Loop Automation
             setInterval(() => {
-                index = (index + 1) % testimonials.length;
-                track.style.transform = `translateX(-${index * cardWidth}px)`;
-            }, 4000);
+                // Ensure slider only runs if element is visible
+                if(track.offsetParent !== null) {
+                    index = (index + 1) % testimonials.length;
+                    track.style.transform = `translateX(-${index * cardWidth}px)`;
+                }
+            }, 5000);
         }
     </script>
 
