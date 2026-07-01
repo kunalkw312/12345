@@ -30,6 +30,23 @@ let allPublishedLeads = [];
 let currentCategoryFilter = 'All';
 window.currentEditingLeadId = null;
 
+// Helper to get category icons matching the new UI
+function getCategoryIcon(category) {
+    const icons = {
+        'Finance': 'fa-money-bill-wave',
+        'Legal': 'fa-scale-balanced',
+        'Insurance': 'fa-shield-halved',
+        'Data': 'fa-database',
+        'B2B': 'fa-building',
+        'Marketing': 'fa-bullhorn',
+        'Healthcare': 'fa-heart-pulse',
+        'Lifestyle': 'fa-plane',
+        'IT': 'fa-laptop-code',
+        'Renewable Energy': 'fa-solar-panel'
+    };
+    return icons[category] || 'fa-list';
+}
+
 // ==========================================
 // 02. CORE APPLICATION ROUTING (SPA Engine)
 // ==========================================
@@ -73,9 +90,10 @@ window.submitContactForm = async function (e) {
     const name = form.name?.value || form.querySelector('input[placeholder*="Name"]')?.value || '';
     const email = form.email?.value || form.querySelector('input[placeholder*="Email"]')?.value || '';
     const phone = form.phone?.value || form.querySelector('input[placeholder*="Phone"]')?.value || '';
-    const message = form.message?.value || form.querySelector('textarea')?.value || '';
+    const message = form.message?.value || form.querySelector('textarea')?.value || 'Quick Inquiry (No Message Provided)';
 
     const btn = form.querySelector('button');
+    const originalText = btn ? btn.innerText : 'Send Message';
     if (btn) btn.innerText = "Sending...";
 
     try {
@@ -90,7 +108,7 @@ window.submitContactForm = async function (e) {
         console.error(error);
         alert("Failed to submit request.");
     } finally {
-        if (btn) btn.innerText = "Send Message";
+        if (btn) btn.innerText = originalText;
     }
 };
 
@@ -99,7 +117,7 @@ window.loadPublicLeads = async function () {
     if (!grid) return;
     if (!db) return;
 
-    grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px;">Loading leads...</div>';
+    grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--text-muted);">Loading live database...</div>';
 
     try {
         const snap = await getDocs(collection(db, "published_leads"));
@@ -110,15 +128,19 @@ window.loadPublicLeads = async function () {
         window.filterPublicLeads(); 
     } catch (e) {
         console.error(e);
+        grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:red;">Error loading leads.</div>';
     }
 };
 
 window.setLeadFilter = function (category) {
     currentCategoryFilter = category;
-    document.querySelectorAll('.filter-pill').forEach(btn => {
+    
+    // Update pill active states based on the new UI class (.pill)
+    document.querySelectorAll('.pill').forEach(btn => {
         if (btn.innerText.trim() === category) btn.classList.add('active');
         else btn.classList.remove('active');
     });
+    
     window.filterPublicLeads();
 };
 
@@ -135,26 +157,28 @@ window.filterPublicLeads = function () {
         return matchesCategory && matchesSearch;
     });
 
-    const summary = document.getElementById('lead-results-summary');
-    if (summary) summary.innerText = `Showing ${filteredLeads.length} leads`;
-
     if (filteredLeads.length === 0) {
-        grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px;">No leads found.</div>';
+        grid.className = ""; // Remove grid class for empty state
+        grid.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-muted); width: 100%;">No leads found matching your criteria.</div>';
         return;
     }
 
-    grid.innerHTML = filteredLeads.map(data => `
-        <div class="lead-card-new" style="background:white; padding:30px; border-radius:8px; display:flex; gap:20px; border:1px solid #f0f4f9; margin-bottom:15px;">
-            <div style="flex:1;">
-                <div style="display:flex; justify-content:between; align-items:center; margin-bottom:10px;">
-                    <h4 style="font-size:18px; margin:0; color:var(--primary);">${data.title}</h4>
-                    <span class="badge" style="background:#e0f2fe; color:#0369a1; padding:4px 10px; border-radius:12px; font-size:12px;">${data.category}</span>
-                </div>
-                <p style="font-size:14px; color:var(--text-muted);">${data.description}</p>
-                <button onclick="window.navigate('contact-view')" style="background:none; border:none; color:var(--accent-dark); font-weight:700; cursor:pointer; padding:0;">Apply Now →</button>
+    grid.className = "leads-grid-2"; // Apply the 2-column grid from the new CSS
+    
+    // Output UI matching the new `lead-card-new` design
+    grid.innerHTML = filteredLeads.map(data => {
+        const iconClass = getCategoryIcon(data.category);
+        return `
+        <div class="lead-card-new">
+            <div class="lcn-header">
+                <h4><i class="fa-solid ${iconClass}"></i> ${data.title}</h4>
+                <span class="lcn-badge">${data.category}</span>
             </div>
+            <p>${data.description}</p>
+            <button onclick="window.navigate('contact-view')">View Details &rarr;</button>
         </div>
-    `).join("");
+        `;
+    }).join("");
 };
 
 // ==========================================
@@ -186,7 +210,7 @@ window.switchAdminTab = function (tabName) {
     const targetedNavLink = document.getElementById(`nav-${tabName}`);
     if (targetedNavLink) targetedNavLink.classList.add('active');
 
-    const tabs = ['dash', 'leads', 'users', 'contactforms', 'reports'];
+    const tabs = ['dash', 'leads', 'users', 'contactforms'];
     tabs.forEach(t => {
         const tabEl = document.getElementById(`tab-${t}`);
         if (tabEl) tabEl.classList.add('hidden');
@@ -198,7 +222,6 @@ window.switchAdminTab = function (tabName) {
     if (tabName === 'dash') window.loadAdminDash();
     if (tabName === 'leads') window.loadAdminLeads();
     if (tabName === 'contactforms' || tabName === 'users') window.loadContactFormsAndKanban();
-    if (tabName === 'reports') window.loadAdminReports();
 };
 
 window.openAddLeadModal = function() {
@@ -302,13 +325,13 @@ window.loadAdminLeads = async function() {
 
             html += `
             <tr style="border-bottom:1px solid #edf2f7;">
-                <td style="padding:16px; font-weight:600;">${data.title}</td>
-                <td style="padding:16px;"><span class="badge" style="background:#e0f2fe; padding:4px 10px; border-radius:12px; font-size:12px;">${data.category}</span></td>
-                <td style="padding:16px;"><span class="badge" style="background:#e6f4ea; color:#137333; padding:4px 10px; border-radius:12px; font-size:12px;">Active</span></td>
+                <td style="padding:16px; font-weight:600; color:var(--secondary);">${data.title}</td>
+                <td style="padding:16px;"><span style="background:#e0f2fe; color:var(--primary); padding:4px 10px; border-radius:12px; font-size:12px; font-weight:600;">${data.category}</span></td>
+                <td style="padding:16px;"><span style="background:#dcfce7; color:#16a34a; padding:4px 10px; border-radius:12px; font-size:12px; font-weight:600;">Active</span></td>
                 <td style="padding:16px;">
                     <div style="display:flex; gap:8px;">
-                        <button class="btn-sm" onclick="window.openEditLeadModal('${id}', '${safeTitle}', '${safeCat}', '${safeDesc}')" style="background:#f59e0b; color:white; border:none; padding:6px 14px; border-radius:4px; font-weight:600; font-size:12px; cursor:pointer;"><i class="fa-solid fa-pen"></i> Edit</button>
-                        <button class="btn-sm" onclick="window.deletePublishedLead('${id}')" style="background:#dc2626; color:white; border:none; padding:6px 14px; border-radius:4px; font-weight:600; font-size:12px; cursor:pointer;">Delete</button>
+                        <button onclick="window.openEditLeadModal('${id}', '${safeTitle}', '${safeCat}', '${safeDesc}')" style="background:#f59e0b; color:white; border:none; padding:6px 12px; border-radius:4px; font-weight:600; font-size:12px; cursor:pointer;"><i class="fa-solid fa-pen"></i> Edit</button>
+                        <button onclick="window.deletePublishedLead('${id}')" style="background:#dc2626; color:white; border:none; padding:6px 12px; border-radius:4px; font-weight:600; font-size:12px; cursor:pointer;">Delete</button>
                     </div>
                 </td>
             </tr>`;
@@ -318,13 +341,11 @@ window.loadAdminLeads = async function() {
 };
 
 // ==========================================
-// 06. CONTACT FORM ENQUIRIES STATUS SYNC ENGINE (Screenshot Fixed)
+// 06. CONTACT FORM ENQUIRIES STATUS SYNC ENGINE
 // ==========================================
 window.updateContactStatus = async function (id, newStatus) {
     try {
-        // Firebase मध्ये अचूक स्टेटस बदल सेव्ह करणे
         await updateDoc(doc(db, "contact_submissions", id), { status: newStatus });
-        // टेबल आणि कानबान व्ह्यू रीलोड करणे
         window.loadContactFormsAndKanban();
     } catch (err) { 
         console.error("Status update error: ", err); 
@@ -346,58 +367,51 @@ window.loadContactFormsAndKanban = async function() {
             const id = d.id;
             const s = data.status || "NEW";
 
-            // स्क्रीनशॉट प्रमाणे बॅजचे कलर्स मॅनेज करणे
-            let sBadgeStyle = 'background:#e0f2fe; color:#0369a1;'; // Default NEW (Blue)
-            if (s === 'CONTACTED') sBadgeStyle = 'background:#fef3c7; color:#d97706;'; // Yellow/Orange
-            if (s === 'IN_PROGRESS') sBadgeStyle = 'background:#f3e8ff; color:#6b21a8;'; // Purple
-            if (s === 'CONVERTED') sBadgeStyle = 'background:#e6f4ea; color:#137333;'; // Green
-            if (s === 'LOST') sBadgeStyle = 'background:#fee2e2; color:#991b1b;'; // Red
+            let sBadgeStyle = 'background:#f1f5f9; color:#475569;'; // Default NEW
+            if (s === 'CONTACTED') sBadgeStyle = 'background:#fef3c7; color:#d97706;'; 
+            if (s === 'IN_PROGRESS') sBadgeStyle = 'background:#f3e8ff; color:#9333ea;'; 
+            if (s === 'CONVERTED') sBadgeStyle = 'background:#dcfce7; color:#16a34a;'; 
+            if (s === 'LOST') sBadgeStyle = 'background:#fee2e2; color:#dc2626;'; 
 
-            // स्क्रीनशॉट प्रमाणे अचूक टेबल रो (Row) तयार करणे
             tableHtml += `
             <tr style="border-bottom:1px solid #edf2f7;">
-                <td style="padding:16px; font-weight:600;">${data.name}</td>
+                <td style="padding:16px; font-weight:600; color:var(--secondary);">${data.name}</td>
                 <td style="padding:16px;">${data.email}</td>
                 <td style="padding:16px;">${data.phone}</td>
-                <td style="padding:16px;">${data.message}</td>
+                <td style="padding:16px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${data.message}</td>
                 <td style="padding:16px;">
-                    <span class="badge" style="${sBadgeStyle} padding:6px 14px; border-radius:12px; font-size:12px; font-weight:600; text-transform:uppercase;">${s}</span>
+                    <span style="${sBadgeStyle} padding:6px 12px; border-radius:12px; font-size:11px; font-weight:700; letter-spacing:0.5px;">${s}</span>
                 </td>
                 <td style="padding:16px;">
-                    <div style="display:flex; gap:6px;">
-                        <button onclick="window.updateContactStatus('${id}','CONTACTED')" style="background:#2563eb; color:white; border:none; padding:6px 12px; border-radius:4px; font-size:12px; font-weight:600; cursor:pointer;">Contact</button>
-                        <button onclick="window.updateContactStatus('${id}','IN_PROGRESS')" style="background:#7c3aed; color:white; border:none; padding:6px 12px; border-radius:4px; font-size:12px; font-weight:600; cursor:pointer;">Progress</button>
-                        <button onclick="window.updateContactStatus('${id}','CONVERTED')" style="background:#16a34a; color:white; border:none; padding:6px 12px; border-radius:4px; font-size:12px; font-weight:600; cursor:pointer;">Convert</button>
-                        <button onclick="window.updateContactStatus('${id}','LOST')" style="background:#dc2626; color:white; border:none; padding:6px 12px; border-radius:4px; font-size:12px; font-weight:600; cursor:pointer;">Lost</button>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                        <button onclick="window.updateContactStatus('${id}','CONTACTED')" style="background:#f59e0b; color:white; border:none; padding:4px 8px; border-radius:4px; font-size:11px; font-weight:600; cursor:pointer;">Contact</button>
+                        <button onclick="window.updateContactStatus('${id}','IN_PROGRESS')" style="background:#9333ea; color:white; border:none; padding:4px 8px; border-radius:4px; font-size:11px; font-weight:600; cursor:pointer;">Progress</button>
+                        <button onclick="window.updateContactStatus('${id}','CONVERTED')" style="background:#16a34a; color:white; border:none; padding:4px 8px; border-radius:4px; font-size:11px; font-weight:600; cursor:pointer;">Convert</button>
+                        <button onclick="window.updateContactStatus('${id}','LOST')" style="background:#dc2626; color:white; border:none; padding:4px 8px; border-radius:4px; font-size:11px; font-weight:600; cursor:pointer;">Lost</button>
                     </div>
                 </td>
             </tr>`;
 
-            const cardMarkup = `<div class="kanban-card" style="background:white; padding:14px; border-radius:4px; box-shadow:0 1px 3px rgba(0,0,0,0.1); margin-bottom:10px; border-left:4px solid #2563eb; font-weight:600; font-size:13px;">${data.name}</div>`;
+            const cardMarkup = `<div style="background:white; padding:12px; border-radius:6px; border:1px solid #e2e8f0; margin-bottom:10px; font-weight:600; font-size:13px; color:var(--secondary); box-shadow:var(--shadow-sm);">${data.name}</div>`;
             if (kb[s] !== undefined) kb[s] += cardMarkup;
         });
 
         tbody.innerHTML = tableHtml || '<tr><td colspan="6" style="text-align:center; padding:20px;">No records found.</td></tr>';
 
-        // Kanban बोर्ड देखील सिंक ठेवणे
         const tabs = ['new', 'contacted', 'inprogress', 'converted', 'lost'];
         tabs.forEach(t => {
             const el = document.getElementById(`kb-${t}`);
-            if (el) el.innerHTML = kb[t.toUpperCase().replace('INPROGRESS', 'IN_PROGRESS')] || '<div style="color:#94a3b8; font-size:12px; text-align:center; padding:10px;">No Leads</div>';
+            if (el) el.innerHTML = kb[t.toUpperCase().replace('INPROGRESS', 'IN_PROGRESS')] || '<div style="color:var(--text-muted); font-size:12px; text-align:center; padding:10px;">Empty</div>';
         });
 
     } catch (e) { console.error(e); }
 };
 
-window.loadAdminReports = async function() {
-    if (!db) return;
-    try {
-        const snap = await getDocs(collection(db, "contact_submissions"));
-        if (document.getElementById('rep-total')) document.getElementById('rep-total').innerText = snap.size;
-    } catch (e) { console.error(e); }
-};
-
 // System Initializer
 document.addEventListener("DOMContentLoaded", () => {
-    window.loadPublicLeads();
+    // Only load public leads if we aren't starting on an admin route
+    const hash = window.location.hash;
+    if (hash !== '#admin') {
+        window.loadPublicLeads();
+    }
 });
