@@ -25,22 +25,20 @@ try {
     console.error("Firebase Initialization Error: ", error);
 }
 
-// Global State Management
+// Global Variables
 let allPublishedLeads = [];
 let currentCategoryFilter = 'All';
+window.currentEditingLeadId = null;
 
 // ==========================================
 // 02. CORE APPLICATION ROUTING (SPA Engine)
 // ==========================================
 window.navigate = function (viewId) {
-    // Deactivate all views
     document.querySelectorAll('.page-view').forEach(v => v.classList.remove('active'));
     
-    // Activate target view
     const target = document.getElementById(viewId);
     if (target) target.classList.add('active');
 
-    // Manage standard public header/footer visibility context
     const isAdminView = (viewId === 'admin-login-view' || viewId === 'admin-dashboard-view');
     const mainHeader = document.getElementById('main-header');
     const mainFooter = document.getElementById('main-footer');
@@ -48,10 +46,10 @@ window.navigate = function (viewId) {
     if (mainHeader) mainHeader.style.display = isAdminView ? 'none' : 'flex';
     if (mainFooter) mainFooter.style.display = isAdminView ? 'none' : 'block';
 
-    // Route access intercept loops
     if (viewId === 'admin-dashboard-view') {
         if (sessionStorage.getItem('adminAuth') !== 'true') {
             window.navigate('admin-login-view');
+            return;
         } else {
             window.switchAdminTab('dash');
         }
@@ -61,7 +59,6 @@ window.navigate = function (viewId) {
         window.loadPublicLeads();
     }
     
-    // Smooth reset scroll layout orientation
     window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
@@ -70,18 +67,15 @@ window.navigate = function (viewId) {
 // ==========================================
 window.submitContactForm = async function (e) {
     e.preventDefault();
-    if (!db) return alert("Database connection error. Please verify configuration.");
+    if (!db) return alert("Database connection error.");
 
     const form = e.target;
-    
-    // Multi-tier structural selectors safeguard form read operations
-    const name = form.name?.value || form.querySelector('input[type="text"], input[placeholder*="Name"]')?.value || '';
-    const email = form.email?.value || form.querySelector('input[type="email"], input[placeholder*="Email"]')?.value || '';
-    const phone = form.phone?.value || form.querySelector('input[type="tel"], input[placeholder*="Phone"]')?.value || '';
+    const name = form.name?.value || form.querySelector('input[placeholder*="Name"]')?.value || '';
+    const email = form.email?.value || form.querySelector('input[placeholder*="Email"]')?.value || '';
+    const phone = form.phone?.value || form.querySelector('input[placeholder*="Phone"]')?.value || '';
     const message = form.message?.value || form.querySelector('textarea')?.value || '';
 
     const btn = form.querySelector('button');
-    const originalText = btn ? btn.innerText : "Send Message";
     if (btn) btn.innerText = "Sending...";
 
     try {
@@ -93,57 +87,41 @@ window.submitContactForm = async function (e) {
         alert("Your inquiry has been submitted successfully!");
         form.reset();
     } catch (error) {
-        console.error("Firestore Document Transmission Error:", error);
-        alert("Failed to submit request. Check database rule parameters.");
+        console.error(error);
+        alert("Failed to submit request.");
     } finally {
-        if (btn) btn.innerText = originalText;
+        if (btn) btn.innerText = "Send Message";
     }
 };
 
 window.loadPublicLeads = async function () {
     const grid = document.getElementById('public-leads-grid');
     if (!grid) return;
-    
-    if (!db) { 
-        grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:red;">Database connectivity failure. Check settings.</div>'; 
-        return; 
-    }
+    if (!db) return;
 
-    grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; font-weight:500; color:var(--text-muted);"><i class="fa-solid fa-spinner fa-spin" style="margin-right:10px;"></i>Loading active verified leads...</div>';
+    grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px;">Loading leads...</div>';
 
     try {
         const snap = await getDocs(collection(db, "published_leads"));
         allPublishedLeads = [];
-
         snap.forEach(doc => {
             allPublishedLeads.push(doc.data());
         });
-
         window.filterPublicLeads(); 
-
     } catch (e) {
-        console.error("Firestore Document Read Sequence Interrupted:", e);
-        grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:red;">Error loading leads cache framework.</div>';
+        console.error(e);
     }
 };
 
-// Category Pill Handler Engine
 window.setLeadFilter = function (category) {
     currentCategoryFilter = category;
-
-    // Synchronize current filter node component tokens
     document.querySelectorAll('.filter-pill').forEach(btn => {
-        if (btn.innerText.trim() === category) {
-            btn.classList.add('active');
-        } else {
-            btn.classList.remove('active');
-        }
+        if (btn.innerText.trim() === category) btn.classList.add('active');
+        else btn.classList.remove('active');
     });
-
     window.filterPublicLeads();
 };
 
-// Lead Filtering Pipeline Rendering Matrix
 window.filterPublicLeads = function () {
     const grid = document.getElementById('public-leads-grid');
     if (!grid) return;
@@ -153,58 +131,30 @@ window.filterPublicLeads = function () {
 
     let filteredLeads = allPublishedLeads.filter(lead => {
         const matchesCategory = currentCategoryFilter === 'All' || lead.category === currentCategoryFilter;
-        const matchesSearch = (lead.title?.toLowerCase().includes(searchTerm) || 
-                             lead.description?.toLowerCase().includes(searchTerm) || 
-                             lead.category?.toLowerCase().includes(searchTerm));
-
+        const matchesSearch = (lead.title?.toLowerCase().includes(searchTerm) || lead.description?.toLowerCase().includes(searchTerm));
         return matchesCategory && matchesSearch;
     });
 
-    // Update Layout Tracking Summaries Counter
     const summary = document.getElementById('lead-results-summary');
-    if (summary) {
-        summary.innerText = currentCategoryFilter === 'All'
-            ? `Showing ${filteredLeads.length} total leads`
-            : `Showing ${filteredLeads.length} leads in ${currentCategoryFilter}`;
-    }
+    if (summary) summary.innerText = `Showing ${filteredLeads.length} leads`;
 
     if (filteredLeads.length === 0) {
-        grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:60px 20px; color:var(--text-muted); font-size:16px;">No leads match your matching criteria profile configurations.</div>';
+        grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px;">No leads found.</div>';
         return;
     }
 
-    let html = '';
-    filteredLeads.forEach(data => {
-        // Evaluate appropriate context graphic classes
-        let iconClass = "fa-briefcase";
-        if (data.category === "Insurance") iconClass = "fa-shield-halved";
-        if (data.category === "Finance") iconClass = "fa-dollar-sign";
-        if (data.category === "Legal") iconClass = "fa-scale-balanced";
-        if (data.category === "Healthcare") iconClass = "fa-heart-pulse";
-        if (data.category === "RenewableEnergy") iconClass = "fa-leaf";
-        if (data.category === "IT") iconClass = "fa-laptop-code";
-
-        html += `
-            <div class="lead-card-new" style="background:var(--white); padding:30px; border-radius:var(--radius-md); box-shadow:var(--shadow-sm); display:flex; gap:20px; transition:var(--transition); border:1px solid #f0f4f9;">
-                <div class="lead-icon" style="width:55px; height:55px; background:var(--bg-light); border-radius:50%; display:flex; justify-content:center; align-items:center; color:var(--accent-dark); font-size:22px; flex-shrink:0;">
-                    <i class="fa-solid ${iconClass}"></i>
+    grid.innerHTML = filteredLeads.map(data => `
+        <div class="lead-card-new" style="background:white; padding:30px; border-radius:8px; display:flex; gap:20px; border:1px solid #f0f4f9; margin-bottom:15px;">
+            <div style="flex:1;">
+                <div style="display:flex; justify-content:between; align-items:center; margin-bottom:10px;">
+                    <h4 style="font-size:18px; margin:0; color:var(--primary);">${data.title}</h4>
+                    <span class="badge" style="background:#e0f2fe; color:#0369a1; padding:4px 10px; border-radius:12px; font-size:12px;">${data.category}</span>
                 </div>
-                <div class="lead-details" style="flex:1; display:flex; flex-direction:column; justify-content:space-between;">
-                    <div style="margin-bottom:15px;">
-                        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:8px;">
-                            <h4 style="font-size:18px; font-weight:700; color:var(--primary); line-height:1.4;">${data.title}</h4>
-                            <span class="badge" style="background:#e0f2fe; color:var(--primary-light); padding:5px 12px; border-radius:20px; font-size:12px; font-weight:600; white-space:nowrap;">${data.category}</span>
-                        </div>
-                        <p style="font-size:14px; color:var(--text-muted); line-height:1.6; margin-bottom:15px;">${data.description}</p>
-                    </div>
-                    <button class="btn-view" onclick="window.navigate('contact-view')" style="align-self:flex-start; background:none; border:none; color:var(--accent-dark); font-weight:700; font-size:14px; cursor:pointer; padding:0; display:flex; align-items:center; gap:5px; transition:var(--transition);">
-                        View Details <i class="fa-solid fa-arrow-right" style="font-size:12px;"></i>
-                    </button>
-                </div>
+                <p style="font-size:14px; color:var(--text-muted);">${data.description}</p>
+                <button onclick="window.navigate('contact-view')" style="background:none; border:none; color:var(--accent-dark); font-weight:700; cursor:pointer; padding:0;">Apply Now →</button>
             </div>
-        `;
-    });
-    grid.innerHTML = html;
+        </div>
+    `).join("");
 };
 
 // ==========================================
@@ -217,9 +167,6 @@ window.checkLogin = function (e) {
 
     if (email === "admin@gmail.com" && pass === "1234") {
         sessionStorage.setItem('adminAuth', 'true');
-        if (document.getElementById("admin-password")) {
-            document.getElementById("admin-password").value = '';
-        }
         window.navigate('admin-dashboard-view');
     } else {
         alert("Invalid Access Credentials Configuration");
@@ -248,220 +195,209 @@ window.switchAdminTab = function (tabName) {
     const targetedTabWindow = document.getElementById(`tab-${tabName}`);
     if (targetedTabWindow) targetedTabWindow.classList.remove('hidden');
 
-    if (tabName === 'dash') loadAdminDash();
-    if (tabName === 'leads') loadAdminLeads();
-    if (tabName === 'contactforms' || tabName === 'users') loadContactFormsAndKanban();
-    if (tabName === 'reports') loadAdminReports();
+    if (tabName === 'dash') window.loadAdminDash();
+    if (tabName === 'leads') window.loadAdminLeads();
+    if (tabName === 'contactforms' || tabName === 'users') window.loadContactFormsAndKanban();
+    if (tabName === 'reports') window.loadAdminReports();
 };
 
-window.openAddLeadModal = () => {
+window.openAddLeadModal = function() {
+    window.currentEditingLeadId = null; 
+    if (document.getElementById('modal-title')) document.getElementById('modal-title').value = "";
+    if (document.getElementById('modal-cat')) document.getElementById('modal-cat').value = "";
+    if (document.getElementById('modal-desc')) document.getElementById('modal-desc').value = "";
+
     const modal = document.getElementById('add-lead-modal');
-    if (modal) modal.classList.remove('hidden');
+    if (modal) {
+        modal.classList.remove('hidden');
+        const submitBtn = modal.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.innerText = "Publish Lead";
+    }
 };
 
-// --- Tab Module 1: Core Dashboard Operational Metrics ---
-async function loadAdminDash() {
+window.openEditLeadModal = function (id, title, category, description) {
+    window.currentEditingLeadId = id; 
+
+    if (document.getElementById('modal-title')) document.getElementById('modal-title').value = title;
+    if (document.getElementById('modal-cat')) document.getElementById('modal-cat').value = category;
+    if (document.getElementById('modal-desc')) document.getElementById('modal-desc').value = description;
+
+    const modal = document.getElementById('add-lead-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        const submitBtn = modal.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.innerText = "Update Lead";
+    }
+};
+
+window.loadAdminDash = async function() {
     if (!db) return;
     try {
         const snap = await getDocs(collection(db, "published_leads"));
-        const dashTotal = document.getElementById('dash-total');
-        const dashActive = document.getElementById('dash-active');
-        const dashNew = document.getElementById('dash-new');
-        
-        if (dashTotal) dashTotal.innerText = snap.size;
-        if (dashActive) dashActive.innerText = snap.size;
-        if (dashNew) dashNew.innerText = 0;
-    } catch (e) { 
-        console.error("Dashboard metric resolution failed:", e); 
-    }
-}
+        if (document.getElementById('dash-total')) document.getElementById('dash-total').innerText = snap.size;
+        if (document.getElementById('dash-active')) document.getElementById('dash-active').innerText = snap.size;
+    } catch (e) { console.error(e); }
+};
 
-// --- Tab Module 2: Published CRM Leads Processing Matrix ---
 window.submitNewLead = async function (e) {
     e.preventDefault();
     const title = document.getElementById('modal-title')?.value;
     const cat = document.getElementById('modal-cat')?.value;
     const desc = document.getElementById('modal-desc')?.value;
 
+    const btn = e.target.querySelector('button[type="submit"]');
+    if (btn) btn.innerText = "Saving...";
+
     try {
-        await addDoc(collection(db, "published_leads"), {
-            title, category: cat, description: desc, status: "Active", timestamp: serverTimestamp()
-        });
+        if (window.currentEditingLeadId) {
+            await updateDoc(doc(db, "published_leads", window.currentEditingLeadId), {
+                title: title, category: cat, description: desc
+            });
+            window.currentEditingLeadId = null;
+            alert("Lead updated successfully!");
+        } else {
+            await addDoc(collection(db, "published_leads"), {
+                title: title, category: cat, description: desc, status: "Active", timestamp: serverTimestamp()
+            });
+            alert("Lead published successfully!");
+        }
+
         const modal = document.getElementById('add-lead-modal');
         if (modal) modal.classList.add('hidden');
         
         e.target.reset();
-        loadAdminLeads();
-        loadAdminDash();
-    } catch (err) { 
-        console.error("Error committing dynamic item framework creation logic:", err); 
-        alert("Failed to write lead document configuration parameters."); 
+        window.loadAdminLeads();
+        window.loadAdminDash();
+    } catch (err) { console.error(err); } finally {
+        if (btn) btn.innerText = "Publish Lead";
     }
 };
 
 window.deletePublishedLead = async function (id) {
-    if (!confirm("Are you sure you want to permanently delete this lead mapping?")) return;
+    if (!confirm("Are you sure you want to delete this lead?")) return;
     try {
         await deleteDoc(doc(db, "published_leads", id));
-        loadAdminLeads();
-    } catch (err) {
-        console.error("Delete operation baseline dropped:", err);
-    }
+        window.loadAdminLeads();
+        window.loadAdminDash();
+    } catch (err) { console.error(err); }
 };
 
-async function loadAdminLeads() {
+window.loadAdminLeads = async function() {
     if (!db) return;
     const tbody = document.getElementById('admin-published-leads-table');
     if (!tbody) return;
     
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted);">Syncing secure dynamic payload rows...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">Loading...</td></tr>';
 
     try {
         const snap = await getDocs(collection(db, "published_leads"));
-        const leadTotalBtn = document.getElementById('leads-tab-total-btn');
-        if (leadTotalBtn) leadTotalBtn.innerText = `Total Leads: ${snap.size}`;
-        
         let html = '';
         snap.forEach(d => {
             const data = d.data();
-            const badgeColor = data.category === 'Finance' ? 'badge-light-blue' : (data.category === 'B2B' ? 'badge-light-purple' : 'badge-light-green');
+            const id = d.id;
+
+            const safeTitle = (data.title || "").replace(/'/g, "\\'").replace(/"/g, '\\"');
+            const safeCat = (data.category || "").replace(/'/g, "\\'").replace(/"/g, '\\"');
+            const safeDesc = (data.description || "").replace(/'/g, "\\'").replace(/"/g, '\\"');
 
             html += `
             <tr style="border-bottom:1px solid #edf2f7;">
-                <td style="padding:16px; font-weight:600; color:var(--primary);">${data.title}</td>
-                <td style="padding:16px;"><span class="badge ${badgeColor}" style="padding:4px 10px; border-radius:12px; font-size:12px; font-weight:600;">${data.category}</span></td>
-                <td style="padding:16px;"><span class="badge badge-light-green" style="background:#e6f4ea; color:#137333; padding:4px 10px; border-radius:12px; font-size:12px; font-weight:600;">Active</span></td>
+                <td style="padding:16px; font-weight:600;">${data.title}</td>
+                <td style="padding:16px;"><span class="badge" style="background:#e0f2fe; padding:4px 10px; border-radius:12px; font-size:12px;">${data.category}</span></td>
+                <td style="padding:16px;"><span class="badge" style="background:#e6f4ea; color:#137333; padding:4px 10px; border-radius:12px; font-size:12px;">Active</span></td>
                 <td style="padding:16px;">
-                    <button class="btn-sm bg-red" onclick="window.deletePublishedLead('${d.id}')" style="background:#dc2626; color:var(--white); border:none; padding:6px 14px; border-radius:var(--radius-sm); font-weight:600; font-size:12px; cursor:pointer; transition:var(--transition);">Delete</button>
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn-sm" onclick="window.openEditLeadModal('${id}', '${safeTitle}', '${safeCat}', '${safeDesc}')" style="background:#f59e0b; color:white; border:none; padding:6px 14px; border-radius:4px; font-weight:600; font-size:12px; cursor:pointer;"><i class="fa-solid fa-pen"></i> Edit</button>
+                        <button class="btn-sm" onclick="window.deletePublishedLead('${id}')" style="background:#dc2626; color:white; border:none; padding:6px 14px; border-radius:4px; font-weight:600; font-size:12px; cursor:pointer;">Delete</button>
+                    </div>
                 </td>
             </tr>`;
         });
-        tbody.innerHTML = html || '<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted);">No active leads cataloged inside index arrays.</td></tr>';
-    } catch (e) { 
-        console.error(e); 
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:red;">System layout stream index mismatch configuration failure.</td></tr>'; 
-    }
-}
+        tbody.innerHTML = html || '<tr><td colspan="4" style="text-align:center; padding:20px;">No leads found.</td></tr>';
+    } catch (e) { console.error(e); }
+};
 
-// --- Tab Modules 3 & 4: Contacts Management & Interactive Kanban Framework ---
+// ==========================================
+// 06. CONTACT FORM ENQUIRIES STATUS SYNC ENGINE (Screenshot Fixed)
+// ==========================================
 window.updateContactStatus = async function (id, newStatus) {
     try {
+        // Firebase मध्ये अचूक स्टेटस बदल सेव्ह करणे
         await updateDoc(doc(db, "contact_submissions", id), { status: newStatus });
-        loadContactFormsAndKanban();
-    } catch (err) {
-        console.error("Status state mutation rejected:", err);
+        // टेबल आणि कानबान व्ह्यू रीलोड करणे
+        window.loadContactFormsAndKanban();
+    } catch (err) { 
+        console.error("Status update error: ", err); 
     }
 };
 
-window.deleteContactForm = async function (id) {
-    if (!confirm("Permanently drop data transmission submission record?")) return;
-    try {
-        await deleteDoc(doc(db, "contact_submissions", id));
-        loadContactFormsAndKanban();
-    } catch (err) {
-        console.error("Record purge failed:", err);
-    }
-};
-
-async function loadContactFormsAndKanban() {
+window.loadContactFormsAndKanban = async function() {
     if (!db) return;
     const tbody = document.getElementById('admin-contact-forms-table');
     if (!tbody) return;
-    
-    const kb = { NEW: '', CONTACTED: '', IN_PROGRESS: '', CONVERTED: '', LOST: '' };
 
     try {
         const snap = await getDocs(collection(db, "contact_submissions"));
         let tableHtml = '';
+        const kb = { NEW: '', CONTACTED: '', IN_PROGRESS: '', CONVERTED: '', LOST: '' };
 
         snap.forEach(d => {
             const data = d.data();
             const id = d.id;
             const s = data.status || "NEW";
 
-            let sBadge = 'badge-light-blue';
-            if (s === 'CONTACTED') sBadge = 'badge-light-yellow';
-            if (s === 'IN_PROGRESS') sBadge = 'badge-light-purple';
-            if (s === 'CONVERTED') sBadge = 'badge-light-green';
-            if (s === 'LOST') sBadge = 'badge-light-red';
+            // स्क्रीनशॉट प्रमाणे बॅजचे कलर्स मॅनेज करणे
+            let sBadgeStyle = 'background:#e0f2fe; color:#0369a1;'; // Default NEW (Blue)
+            if (s === 'CONTACTED') sBadgeStyle = 'background:#fef3c7; color:#d97706;'; // Yellow/Orange
+            if (s === 'IN_PROGRESS') sBadgeStyle = 'background:#f3e8ff; color:#6b21a8;'; // Purple
+            if (s === 'CONVERTED') sBadgeStyle = 'background:#e6f4ea; color:#137333;'; // Green
+            if (s === 'LOST') sBadgeStyle = 'background:#fee2e2; color:#991b1b;'; // Red
 
+            // स्क्रीनशॉट प्रमाणे अचूक टेबल रो (Row) तयार करणे
             tableHtml += `
             <tr style="border-bottom:1px solid #edf2f7;">
-                <td style="padding:16px; font-weight:600; color:var(--primary);">${data.name}</td>
-                <td style="padding:16px; font-size:14px;">${data.email}</td>
-                <td style="padding:16px; font-size:14px;">${data.phone}</td>
-                <td style="padding:16px;"><div style="max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13px; color:var(--text-muted);">${data.message}</div></td>
-                <td style="padding:16px;"><span class="badge ${sBadge}" style="padding:4px 10px; border-radius:12px; font-size:12px; font-weight:600;">${s}</span></td>
-                <td style="padding:16px; min-width:260px; display:flex; gap:6px; flex-wrap:wrap;">
-                    <button class="btn-sm bg-blue" onclick="window.updateContactStatus('${id}','CONTACTED')" style="background:#2563eb; color:var(--white); border:none; padding:4px 10px; border-radius:4px; font-size:11px; font-weight:600; cursor:pointer;">Contact</button>
-                    <button class="btn-sm bg-purple" onclick="window.updateContactStatus('${id}','IN_PROGRESS')" style="background:#7c3aed; color:var(--white); border:none; padding:4px 10px; border-radius:4px; font-size:11px; font-weight:600; cursor:pointer;">Progress</button>
-                    <button class="btn-sm bg-green" onclick="window.updateContactStatus('${id}','CONVERTED')" style="background:#16a34a; color:var(--white); border:none; padding:4px 10px; border-radius:4px; font-size:11px; font-weight:600; cursor:pointer;">Convert</button>
-                    <button class="btn-sm bg-red" onclick="window.updateContactStatus('${id}','LOST')" style="background:#dc2626; color:var(--white); border:none; padding:4px 10px; border-radius:4px; font-size:11px; font-weight:600; cursor:pointer;">Lost</button>
+                <td style="padding:16px; font-weight:600;">${data.name}</td>
+                <td style="padding:16px;">${data.email}</td>
+                <td style="padding:16px;">${data.phone}</td>
+                <td style="padding:16px;">${data.message}</td>
+                <td style="padding:16px;">
+                    <span class="badge" style="${sBadgeStyle} padding:6px 14px; border-radius:12px; font-size:12px; font-weight:600; text-transform:uppercase;">${s}</span>
+                </td>
+                <td style="padding:16px;">
+                    <div style="display:flex; gap:6px;">
+                        <button onclick="window.updateContactStatus('${id}','CONTACTED')" style="background:#2563eb; color:white; border:none; padding:6px 12px; border-radius:4px; font-size:12px; font-weight:600; cursor:pointer;">Contact</button>
+                        <button onclick="window.updateContactStatus('${id}','IN_PROGRESS')" style="background:#7c3aed; color:white; border:none; padding:6px 12px; border-radius:4px; font-size:12px; font-weight:600; cursor:pointer;">Progress</button>
+                        <button onclick="window.updateContactStatus('${id}','CONVERTED')" style="background:#16a34a; color:white; border:none; padding:6px 12px; border-radius:4px; font-size:12px; font-weight:600; cursor:pointer;">Convert</button>
+                        <button onclick="window.updateContactStatus('${id}','LOST')" style="background:#dc2626; color:white; border:none; padding:6px 12px; border-radius:4px; font-size:12px; font-weight:600; cursor:pointer;">Lost</button>
+                    </div>
                 </td>
             </tr>`;
 
-            const cardMarkup = `<div class="kanban-card" style="background:var(--white); padding:14px; border-radius:var(--radius-sm); box-shadow:var(--shadow-sm); margin-bottom:10px; border-left:4px solid var(--primary-light); font-weight:600; font-size:13px; color:var(--primary);">${data.name}</div>`;
-            if (kb[s] !== undefined) {
-                kb[s] += cardMarkup;
-            } else {
-                kb['NEW'] += cardMarkup;
-            }
+            const cardMarkup = `<div class="kanban-card" style="background:white; padding:14px; border-radius:4px; box-shadow:0 1px 3px rgba(0,0,0,0.1); margin-bottom:10px; border-left:4px solid #2563eb; font-weight:600; font-size:13px;">${data.name}</div>`;
+            if (kb[s] !== undefined) kb[s] += cardMarkup;
         });
 
-        tbody.innerHTML = tableHtml || '<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--text-muted);">No request logs cataloged inside the target databases.</td></tr>';
+        tbody.innerHTML = tableHtml || '<tr><td colspan="6" style="text-align:center; padding:20px;">No records found.</td></tr>';
 
-        // Load visual structural frames interface for Kanban streams
-        const kbNew = document.getElementById('kb-new');
-        const kbContacted = document.getElementById('kb-contacted');
-        const kbInProgress = document.getElementById('kb-inprogress');
-        const kbConverted = document.getElementById('kb-converted');
-        const kbLost = document.getElementById('kb-lost');
+        // Kanban बोर्ड देखील सिंक ठेवणे
+        const tabs = ['new', 'contacted', 'inprogress', 'converted', 'lost'];
+        tabs.forEach(t => {
+            const el = document.getElementById(`kb-${t}`);
+            if (el) el.innerHTML = kb[t.toUpperCase().replace('INPROGRESS', 'IN_PROGRESS')] || '<div style="color:#94a3b8; font-size:12px; text-align:center; padding:10px;">No Leads</div>';
+        });
 
-        if (kbNew) kbNew.innerHTML = kb.NEW || '<div style="color:#94a3b8; font-size:12px; text-align:center; padding:10px;">No Leads</div>';
-        if (kbContacted) kbContacted.innerHTML = kb.CONTACTED || '<div style="color:#94a3b8; font-size:12px; text-align:center; padding:10px;">No Leads</div>';
-        if (kbInProgress) kbInProgress.innerHTML = kb.IN_PROGRESS || '<div style="color:#94a3b8; font-size:12px; text-align:center; padding:10px;">No Leads</div>';
-        if (kbConverted) kbConverted.innerHTML = kb.CONVERTED || '<div style="color:#94a3b8; font-size:12px; text-align:center; padding:10px;">No Leads</div>';
-        if (kbLost) kbLost.innerHTML = kb.LOST || '<div style="color:#94a3b8; font-size:12px; text-align:center; padding:10px;">No Leads</div>';
+    } catch (e) { console.error(e); }
+};
 
-    } catch (e) {
-        console.error("Data synchronization pipeline dropped:", e);
-        tbody.innerHTML = '<tr><td colspan="6" style="color:red; text-align:center; padding:20px;">Secure runtime handshake timeout error.</td></tr>';
-    }
-}
-
-// --- Tab Module 5: Secure Graphical Statistical Analytical Reports ---
-async function loadAdminReports() {
+window.loadAdminReports = async function() {
     if (!db) return;
     try {
         const snap = await getDocs(collection(db, "contact_submissions"));
-        let active = 0, lost = 0, total = snap.size;
+        if (document.getElementById('rep-total')) document.getElementById('rep-total').innerText = snap.size;
+    } catch (e) { console.error(e); }
+};
 
-        snap.forEach(d => {
-            const s = d.data().status;
-            if (s === 'LOST') lost++;
-            else active++;
-        });
-
-        const repTotal = document.getElementById('rep-total');
-        const repActive = document.getElementById('rep-active');
-        const repInactive = document.getElementById('rep-inactive');
-
-        if (repTotal) repTotal.innerText = total;
-        if (repActive) repActive.innerText = active;
-        if (repInactive) repInactive.innerText = lost;
-
-        // Render graphical matrix height properties asynchronously
-        setTimeout(() => {
-            const chartTotal = document.getElementById('chart-total');
-            const chartActive = document.getElementById('chart-active');
-            const chartInactive = document.getElementById('chart-inactive');
-
-            if (chartTotal) chartTotal.style.height = total > 0 ? '100%' : '10%';
-            if (chartActive) chartActive.style.height = total > 0 ? `${(active / total) * 100}%` : '10%';
-            if (chartInactive) chartInactive.style.height = total > 0 ? `${(lost / total) * 100}%` : '10%';
-        }, 100);
-
-    } catch (e) { 
-        console.error("Reporting algorithm interface evaluation broken:", e); 
-    }
-}
+// System Initializer
+document.addEventListener("DOMContentLoaded", () => {
+    window.loadPublicLeads();
+});
