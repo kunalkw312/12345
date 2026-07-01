@@ -19,7 +19,7 @@
             --primary: #2563eb;
             --primary-light: #3b82f6;
             --primary-dark: #1d4ed8;
-            --secondary: #0f172a; /* Dark Navy for headers/footers */
+            --secondary: #0f172a; 
             --accent: #60a5fa;
             --text-dark: #1e293b;
             --text-muted: #64748b;
@@ -211,7 +211,8 @@
             background: var(--secondary); padding: 15px 7%;
             box-shadow: var(--shadow-lg); border-top: 1px solid rgba(255,255,255,0.1); z-index: 9999;
         }
-        .mobile-menu a { display: block; color: var(--white); padding: 12px 0; font-size: 15px; text-decoration: none; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .mobile-menu a { display: block; color: var(--white); padding: 12px 0; font-size: 15px; text-decoration: none; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); opacity: 0.8;}
+        .mobile-menu a.active { color: var(--accent); opacity: 1;}
         .mobile-menu.show { display: block; }
 
         /* ==========================================================================
@@ -320,7 +321,7 @@
         .home-cta h2 { color: white; font-size: 28px; margin-bottom: 25px; }
 
         /* ==========================================================================
-           05. LEADS PAGE STYLES (Grouped Layout exactly like image)
+           05. LEADS PAGE STYLES
            ========================================================================== */
         .leads-header { background: var(--bg-blue-light); padding: 140px 7% 60px; text-align: center; }
         .search-bar-container { max-width: 600px; margin: 30px auto 0; position: relative; }
@@ -367,49 +368,42 @@
         .serv-list li::before { content: '•'; color: var(--primary); font-size: 18px; line-height: 1; }
 
         /* ==========================================================================
-           07. ABOUT PAGE STYLES
+           07. ABOUT PAGE STYLES (Redesigned)
            ========================================================================== */
-        .about-page { padding: 120px 7% 80px; background: var(--secondary); min-height: 100vh; color: white; text-align: center; }
-        .about-page .badge-top { display: inline-block; background: white; color: var(--secondary); padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-bottom: 20px; }
-        .about-page h1 { font-size: 36px; margin-bottom: 15px; color: white; }
-        .about-page p.sub { font-size: 16px; color: #cbd5e1; max-width: 600px; margin: 0 auto 30px; }
+        .about-hero { padding: 160px 7% 80px; background: linear-gradient(135deg, #0f172a, #1e3a8a); color: white; text-align: center; }
+        .about-hero h1 { font-size: 42px; margin-bottom: 15px; color: white; }
+        .about-hero p { font-size: 18px; max-width: 700px; margin: 0 auto; opacity: 0.9; }
         
-        .about-card { background: white; border-radius: var(--radius-lg); max-width: 800px; margin: 0 auto; text-align: left; overflow: hidden; box-shadow: var(--shadow-lg); color: var(--text-dark); }
-        .ac-header { background: var(--primary); padding: 50px; color: white; text-align: center; }
-        .ac-header h2 { color: white; font-size: 28px; margin-bottom: 15px; }
-        .ac-header p { font-size: 15px; opacity: 0.9; max-width: 600px; margin: 0 auto; }
+        .about-main { padding: 80px 7%; background: white; }
+        .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 50px; align-items: center; max-width: 1100px; margin: 0 auto; }
+        .about-img img { width: 100%; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); }
+        .about-text h2 { font-size: 32px; color: var(--secondary); margin-bottom: 20px; }
+        .about-text p { font-size: 15px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.7; }
         
-        .ac-body { padding: 50px; }
-        .ac-section { margin-bottom: 40px; }
-        .ac-section h3 { font-size: 20px; margin-bottom: 15px; color: var(--secondary); }
-        .ac-section p { font-size: 15px; color: var(--text-muted); line-height: 1.7; }
-        
-        .ac-deliver-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: var(--bg-light); padding: 25px; border-radius: var(--radius-md); margin-top: 15px; }
-        .ac-deliver-grid div { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 500; color: var(--text-dark); }
-        .ac-deliver-grid i { color: var(--primary); }
+        .about-stats-container { display: flex; gap: 30px; margin-top: 30px; flex-wrap: wrap;}
+        .a-stat { background: var(--bg-blue-light); padding: 20px; border-radius: var(--radius-md); flex: 1; text-align: center; border: 1px solid #dbeafe; min-width: 150px;}
+        .a-stat h4 { font-size: 28px; color: var(--primary); margin-bottom: 5px; }
+        .a-stat p { font-size: 13px; color: var(--text-dark); font-weight: 500; }
 
-        .ac-footer { background: var(--secondary); padding: 40px 50px; display: flex; gap: 50px; color: white; }
-        .ac-stat h4 { font-size: 28px; color: white; margin-bottom: 5px; }
-        .ac-stat p { font-size: 13px; color: #cbd5e1; }
+        .about-features { background: var(--bg-alt); padding: 80px 7%; }
+        .af-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; max-width: 1100px; margin: 0 auto; }
+        .af-card { background: white; padding: 30px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); text-align: center;}
+        .af-card i { font-size: 30px; color: var(--primary); margin-bottom: 15px; }
+        .af-card h3 { font-size: 18px; margin-bottom: 10px; color: var(--secondary); }
+        .af-card p { font-size: 14px; color: var(--text-muted); }
 
         /* ==========================================================================
-           08. FAQ PAGE STYLES
+           08. FAQ PAGE STYLES (Redesigned - No Sidebar)
            ========================================================================== */
         .faq-page { padding: 140px 7% 80px; background: var(--bg-blue-light); min-height: 100vh; }
-        .faq-layout { display: flex; gap: 40px; max-width: 1000px; margin: 50px auto 0; }
-        .faq-sidebar { width: 250px; background: white; padding: 20px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); height: fit-content; }
-        .faq-sidebar h4 { font-size: 14px; color: var(--text-muted); margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
-        .faq-sidebar ul { list-style: none; }
-        .faq-sidebar li { padding: 12px 15px; margin-bottom: 5px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; cursor: pointer; color: var(--text-dark); transition: var(--transition); }
-        .faq-sidebar li.active, .faq-sidebar li:hover { background: var(--primary); color: white; }
+        .faq-layout { max-width: 800px; margin: 50px auto 0; }
         
-        .faq-content { flex: 1; }
-        .faq-search { margin-bottom: 30px; }
-        .faq-search input { width: 100%; padding: 15px 20px; border: 1px solid #cbd5e1; border-radius: var(--radius-sm); font-size: 15px; outline: none; }
+        .faq-search { margin-bottom: 40px; }
+        .faq-search input { width: 100%; padding: 18px 25px; border: 1px solid #cbd5e1; border-radius: 30px; font-size: 16px; outline: none; box-shadow: var(--shadow-sm); }
         
         .faq-item { background: white; border-radius: var(--radius-sm); margin-bottom: 15px; box-shadow: var(--shadow-sm); overflow: hidden; }
         .faq-q { padding: 20px 25px; font-size: 16px; font-weight: 600; color: var(--secondary); cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-        .faq-q i { transition: transform 0.3s; }
+        .faq-q i { transition: transform 0.3s; color: var(--primary); }
         .faq-a { padding: 0 25px 20px; font-size: 14px; color: var(--text-muted); line-height: 1.7; display: none; }
         .faq-item.active .faq-a { display: block; }
         .faq-item.active .faq-q i { transform: rotate(180deg); }
@@ -434,7 +428,7 @@
         .contact-form button:hover { background: var(--primary-dark); }
 
         /* ==========================================================================
-           10. ADMIN DASHBOARD (Unchanged structurally, updated categories in modal)
+           10. ADMIN DASHBOARD
            ========================================================================== */
         .admin-box { background: white; padding: 40px; border-radius: var(--radius-lg); box-shadow: var(--shadow-md); max-width: 400px; width: 100%; margin: auto; text-align: center; border: 1px solid #e2e8f0;}
         .admin-box h2 { color: var(--secondary); margin-bottom: 20px; font-weight: 700; }
@@ -482,11 +476,8 @@
             .hcb-info { justify-content: center; }
             .testi-grid { grid-template-columns: 1fr; }
             .leads-grid-2 { grid-template-columns: 1fr; }
-            .faq-layout { flex-direction: column; }
-            .faq-sidebar { width: 100%; display: flex; overflow-x: auto; gap: 10px; padding: 10px; }
-            .faq-sidebar h4 { display: none; }
-            .faq-sidebar ul { display: flex; gap: 10px; }
-            .faq-sidebar li { white-space: nowrap; margin: 0; }
+            .about-grid { grid-template-columns: 1fr; text-align: center; }
+            .af-grid { grid-template-columns: 1fr; }
             .footer-grid { grid-template-columns: repeat(2, 1fr); }
             #main-header nav, .contact-btn { display: none; }
             .menu-btn { display: block; }
@@ -495,9 +486,10 @@
         }
         @media (max-width: 600px) {
             .home-hero h1 { font-size: 36px; }
-            .serv-grid, .footer-grid, .ac-deliver-grid { grid-template-columns: 1fr; }
+            .serv-grid, .footer-grid { grid-template-columns: 1fr; }
             .stat-boxes { flex-direction: column; }
             .contact-card { padding: 30px 20px; }
+            .about-hero h1 { font-size: 32px; }
         }
     </style>
 </head>
@@ -523,15 +515,18 @@
         </div>
 
         <div class="mobile-menu" id="mobileMenu">
-            <a onclick="window.navigate('home-view')">Home</a>
-            <a onclick="window.navigate('public-leads-view')">Leads</a>
-            <a onclick="window.navigate('service-view')">Services</a>
-            <a onclick="window.navigate('about-view')">About</a>
-            <a onclick="window.navigate('faq-view')">FAQ</a>
-            <a onclick="window.navigate('contact-view')">Contact</a>
+            <a onclick="window.navigate('home-view')" data-target="home-view" class="active">Home</a>
+            <a onclick="window.navigate('public-leads-view')" data-target="public-leads-view">Leads</a>
+            <a onclick="window.navigate('service-view')" data-target="service-view">Services</a>
+            <a onclick="window.navigate('about-view')" data-target="about-view">About</a>
+            <a onclick="window.navigate('faq-view')" data-target="faq-view">FAQ</a>
+            <a onclick="window.navigate('contact-view')" data-target="contact-view">Contact</a>
         </div>
     </header>
 
+    <!-- ==========================================
+         HOME VIEW 
+         ========================================== -->
     <div id="home-view" class="page-view active">
         
         <section class="home-hero">
@@ -698,6 +693,7 @@
             </div>
         </section>
 
+        <!-- Dynamic Form embedded on Home -->
         <section class="home-contact-block reveal">
             <div class="hcb-left">
                 <h2>Unlock High Converting Verified Leads in 10 minutes</h2>
@@ -715,6 +711,7 @@
                     <input type="text" name="name" placeholder="Full Name" required>
                     <input type="email" name="email" placeholder="Email Address" required>
                     <input type="text" name="phone" placeholder="Phone Number" required>
+                    <textarea name="message" rows="4" placeholder="Your Message" required></textarea>
                     <button type="submit">Send Message</button>
                 </form>
             </div>
@@ -765,6 +762,9 @@
         </section>
     </div>
 
+    <!-- ==========================================
+         LEADS VIEW
+         ========================================== -->
     <div id="public-leads-view" class="page-view">
         <div class="leads-header reveal">
             <h1 style="font-size: 36px; margin-bottom: 15px;">Premium Quality Leads</h1>
@@ -814,6 +814,7 @@
             </div>
 
             <div id="public-leads-grid">
+                
                 <div class="lead-category-section">
                     <h3>Finance <span class="badge">3 Leads</span></h3>
                     <div class="leads-grid-2">
@@ -866,6 +867,9 @@
         </div>
     </div>
 
+    <!-- ==========================================
+         SERVICES VIEW
+         ========================================== -->
     <div id="service-view" class="page-view">
         <div class="services-page reveal">
             <div class="section-title">
@@ -949,67 +953,68 @@
         </div>
     </div>
 
+    <!-- ==========================================
+         ABOUT VIEW (Redesigned)
+         ========================================== -->
     <div id="about-view" class="page-view">
-        <div class="about-page reveal">
-            <span class="badge-top">Qfy Leads</span>
-            <h1>Trusted Technology Partner</h1>
-            <p class="sub">Qfy Leads empowers businesses with intelligent software solutions, advanced data insights, and scalable lead generation strategies.</p>
-            <button class="secondary-btn" style="background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3); margin-bottom: 50px;" onclick="window.navigate('contact-view')">Learn More &rarr;</button>
-
-            <div class="about-card">
-                <div class="ac-header">
-                    <h2>About Qfy Leads</h2>
-                    <p>We help businesses grow faster by delivering accurate, real-time, high-intent leads that convert into revenue.</p>
-                </div>
-                
-                <div class="ac-body">
-                    <div class="ac-section">
-                        <h3>Who We Are</h3>
-                        <p>Qfy Leads is a results-driven lead generation and IT solutions company focused on helping startups, agencies, and enterprises scale their sales pipeline with confidence.</p>
-                    </div>
-
-                    <div class="ac-section">
-                        <h3>What Problem We Solve</h3>
-                        <p>Many businesses struggle with low-quality data, wasted outreach, and inconsistent lead flow. We eliminate this by delivering verified, industry-specific prospects that sales teams can trust.</p>
-                    </div>
-
-                    <div class="ac-section">
-                        <h3>What We Deliver</h3>
-                        <div class="ac-deliver-grid">
-                            <div><i class="fa-solid fa-check-circle"></i> Verified & High-Intent Leads</div>
-                            <div><i class="fa-solid fa-check-circle"></i> Real-Time Lead Delivery</div>
-                            <div><i class="fa-solid fa-check-circle"></i> Industry Specific Targeting</div>
-                            <div><i class="fa-solid fa-check-circle"></i> CRM & API Integrations</div>
-                            <div><i class="fa-solid fa-check-circle"></i> Dedicated Account Support</div>
-                            <div><i class="fa-solid fa-check-circle"></i> Scalable Lead Volumes</div>
+        <div class="about-hero reveal">
+            <h1>Trusted Technology & Lead Partner</h1>
+            <p>Qfy Leads empowers businesses with intelligent software solutions, advanced data insights, and highly scalable lead generation strategies.</p>
+        </div>
+        
+        <div class="about-main reveal">
+            <div class="about-grid">
+                <div class="about-text">
+                    <h2>Who We Are & What We Do</h2>
+                    <p>Qfy Leads is a results-driven lead generation and IT solutions company focused on helping startups, agencies, and enterprises scale their sales pipeline with confidence.</p>
+                    <p>Many businesses struggle with low-quality data, wasted outreach, and inconsistent lead flow. We eliminate this by delivering verified, industry-specific prospects that sales teams can trust unconditionally.</p>
+                    
+                    <div class="about-stats-container">
+                        <div class="a-stat">
+                            <h4>10K+</h4>
+                            <p>Leads Delivered</p>
+                        </div>
+                        <div class="a-stat">
+                            <h4>120+</h4>
+                            <p>Active Clients</p>
                         </div>
                     </div>
-
-                    <div class="ac-section">
-                        <h3>Our Mission</h3>
-                        <p>Our mission is to empower businesses with actionable lead intelligence that transforms outreach efforts into predictable, measurable growth.</p>
-                    </div>
-
-                    <div class="ac-section" style="margin-bottom: 0;">
-                        <h3>Our Vision</h3>
-                        <p>To become India's most trusted and performance-driven lead generation partner by combining technology, transparency, and long-term value.</p>
-                    </div>
                 </div>
+                <div class="about-img">
+                    <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=1200" alt="About Team">
+                </div>
+            </div>
+        </div>
 
-                <div class="ac-footer">
-                    <div class="ac-stat">
-                        <h4>10K+</h4>
-                        <p>Leads Delivered</p>
-                    </div>
-                    <div class="ac-stat">
-                        <h4>120+</h4>
-                        <p>Active Clients</p>
-                    </div>
+        <div class="about-features reveal">
+            <div class="section-title">
+                <h2>Our Mission & Vision</h2>
+                <p>To become India's most trusted and performance-driven lead generation partner by combining technology, transparency, and long-term value.</p>
+            </div>
+            
+            <div class="af-grid">
+                <div class="af-card">
+                    <i class="fa-solid fa-bullseye"></i>
+                    <h3>Verified & High-Intent</h3>
+                    <p>We ensure every prospect truly wants to speak to your sales team before they ever reach your CRM.</p>
+                </div>
+                <div class="af-card">
+                    <i class="fa-solid fa-bolt"></i>
+                    <h3>Real-Time Delivery</h3>
+                    <p>Speed to lead is everything. Our API infrastructure posts data instantly so you can call first.</p>
+                </div>
+                <div class="af-card">
+                    <i class="fa-solid fa-handshake"></i>
+                    <h3>Dedicated Support</h3>
+                    <p>You gain a direct partner who will continually optimize, adjust, and monitor your campaign volume.</p>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- ==========================================
+         FAQ VIEW (Categories removed, full width)
+         ========================================== -->
     <div id="faq-view" class="page-view">
         <div class="faq-page reveal">
             <div class="section-title">
@@ -1018,58 +1023,49 @@
             </div>
 
             <div class="faq-layout">
-                <div class="faq-sidebar">
-                    <h4>Categories</h4>
-                    <ul>
-                        <li class="active">General</li>
-                        <li>Leads</li>
-                        <li>Technical</li>
-                        <li>Pricing</li>
-                    </ul>
+                <div class="faq-search">
+                    <input type="text" placeholder="Search question...">
                 </div>
 
-                <div class="faq-content">
-                    <div class="faq-search">
-                        <input type="text" placeholder="Search question...">
+                <div class="faq-item">
+                    <div class="faq-q" onclick="this.parentElement.classList.toggle('active')">
+                        What is Qfy Leads? <i class="fa-solid fa-chevron-down"></i>
                     </div>
+                    <div class="faq-a">
+                        Qfy Leads is a premium data and technology provider specializing in generating high-intent, TCPA-compliant consumer and B2B leads across major industry verticals like Finance, Legal, Healthcare, and more.
+                    </div>
+                </div>
 
-                    <div class="faq-item">
-                        <div class="faq-q" onclick="this.parentElement.classList.toggle('active')">
-                            What is Qfy Leads? <i class="fa-solid fa-chevron-down"></i>
-                        </div>
-                        <div class="faq-a">
-                            Qfy Leads is a premium data and technology provider specializing in generating high-intent, TCPA-compliant consumer and B2B leads across major industry verticals like Finance, Legal, Healthcare, and more.
-                        </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="this.parentElement.classList.toggle('active')">
+                        How does Qfy Leads work? <i class="fa-solid fa-chevron-down"></i>
                     </div>
+                    <div class="faq-a">
+                        We utilize proprietary marketing campaigns via search, social, and display networks to capture consumers actively looking for your services. We then verify their contact info and intent before routing the data directly to your CRM.
+                    </div>
+                </div>
 
-                    <div class="faq-item">
-                        <div class="faq-q" onclick="this.parentElement.classList.toggle('active')">
-                            How does Qfy Leads work? <i class="fa-solid fa-chevron-down"></i>
-                        </div>
-                        <div class="faq-a">
-                            We utilize proprietary marketing campaigns via search, social, and display networks to capture consumers actively looking for your services. We then verify their contact info and intent before routing the data directly to your CRM.
-                        </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="this.parentElement.classList.toggle('active')">
+                        Which industries do you serve? <i class="fa-solid fa-chevron-down"></i>
                     </div>
+                    <div class="faq-a">
+                        We serve a wide variety of sectors including Finance (Debt, MCA), Legal (Mass Tort, PI), Healthcare (Medicare), Insurance, Home Improvement, Education, IT, and general B2B Data segments.
+                    </div>
+                </div>
 
-                    <div class="faq-item">
-                        <div class="faq-q" onclick="this.parentElement.classList.toggle('active')">
-                            Which industries do you serve? <i class="fa-solid fa-chevron-down"></i>
-                        </div>
-                        <div class="faq-a">
-                            We serve a wide variety of sectors including Finance (Debt, MCA), Legal (Mass Tort, PI), Healthcare (Medicare), Insurance, Home Improvement, Education, IT, and general B2B Data segments.
-                        </div>
-                    </div>
-
-                    <div class="faq-cta">
-                        <h3>Still Have Questions?</h3>
-                        <p>Let our experts guide you with the right lead generation strategy.</p>
-                        <button class="primary-btn" style="background: white; color: var(--primary);" onclick="window.navigate('contact-view')">Contact Our Team &rarr;</button>
-                    </div>
+                <div class="faq-cta">
+                    <h3>Still Have Questions?</h3>
+                    <p>Let our experts guide you with the right lead generation strategy.</p>
+                    <button class="primary-btn" style="background: white; color: var(--primary);" onclick="window.navigate('contact-view')">Contact Our Team &rarr;</button>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- ==========================================
+         CONTACT VIEW 
+         ========================================== -->
     <div id="contact-view" class="page-view">
         <div class="contact-page reveal">
             <div class="contact-card">
@@ -1085,6 +1081,9 @@
         </div>
     </div>
 
+    <!-- ==========================================
+         ADMIN LOGIN & DASHBOARD
+         ========================================== -->
     <div id="admin-login-view" class="page-view" style="padding-top: 150px; min-height: 80vh;">
         <div class="admin-box reveal">
             <h2>Admin Secure Login</h2>
@@ -1166,6 +1165,7 @@
         </div>
     </div>
 
+    <!-- ADD LEAD MODAL -->
     <div id="add-lead-modal" class="hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.8); display:flex; justify-content:center; align-items:center; z-index:99999;">
         <div class="admin-box" style="background:white; max-width:500px; padding:30px;">
             <h3 style="color:var(--secondary); margin-bottom: 20px;">Create New Lead Listing</h3>
@@ -1195,6 +1195,9 @@
         </div>
     </div>
 
+    <!-- ==========================================
+         FOOTER 
+         ========================================== -->
     <footer id="main-footer">
         <div class="footer-grid">
             <div>
@@ -1249,19 +1252,26 @@
     </a>
 
     <script>
-        // Ensure navigate function exists globally if app.js is slow or missing
+        // Modified navigate function to target both desktop and mobile menu links
         window.navigate = window.navigate || function(targetViewId) {
             document.querySelectorAll('.page-view').forEach(el => el.classList.remove('active'));
             const target = document.getElementById(targetViewId);
             if(target) target.classList.add('active');
             
-            // Update active state in nav
-            document.querySelectorAll('#main-header nav a').forEach(el => {
-                if(el.getAttribute('data-target') === targetViewId) el.classList.add('active');
-                else el.classList.remove('active');
+            // Update active state in nav (Desktop & Mobile)
+            document.querySelectorAll('#main-header nav a, #mobileMenu a').forEach(el => {
+                if(el.getAttribute('data-target') === targetViewId) {
+                    el.classList.add('active');
+                } else {
+                    el.classList.remove('active');
+                }
             });
             window.scrollTo({ top: 0, behavior: "smooth" });
-            reveal(); // trigger animations on new view
+            
+            // Force immediate reveal and slight delay reveal to fix content loading delay
+            reveal(); 
+            setTimeout(reveal, 50); 
+            setTimeout(reveal, 200); 
         };
 
         const menuBtn = document.getElementById("menuBtn");
@@ -1306,9 +1316,11 @@
         // Scroll Reveal Animations Engine
         function reveal() {
             document.querySelectorAll(".reveal").forEach(box => {
+                // Ensure only elements in active view are checked to save performance
                 if(box.closest('.page-view.active') || !box.closest('.page-view')) {
                     const top = box.getBoundingClientRect().top;
-                    if (top < window.innerHeight - 80) {
+                    // Adjusted offset limit to load earlier
+                    if (top < window.innerHeight + 150) {
                         box.classList.add("active");
                     }
                 }
