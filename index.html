@@ -1,43 +1,62 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title>Simple YouTube Player</title>
-  </head>
-  <body>
-    <!-- 1. The API will replace this <div> with the YouTube <iframe> -->
-    <div id="player"></div>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clean YouTube Player</title>
+    <style>
+        /* A simple wrapper to contain the video size */
+        #player-container {
+            width: 100%;
+            max-width: 800px; /* Adjust maximum width as needed */
+            aspect-ratio: 16 / 9; /* Keeps the 16:9 video ratio */
+            background-color: #000; /* Black background while loading */
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="player-container">
+        <!-- The API will replace this div with the iframe -->
+        <div id="player"></div>
+    </div>
 
     <script>
-      // 2. Load the YouTube IFrame Player API asynchronously
-      var tag = document.createElement('script');
-      tag.src = "https://www.youtube.com/iframe_api";
-      var firstScriptTag = document.getElementsByTagName('script')[0];
-      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+        // 1. Load the YouTube IFrame Player API code asynchronously.
+        var tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-      // 3. This function creates the <iframe> and player after the API downloads
-      var player;
-      function onYouTubeIframeAPIReady() {
-        player = new YT.Player('player', {
-          height: '390', // Player height in pixels
-          width: '640',  // Player width in pixels
-          videoId: 'wE8s993ZV-8', // Your specific video ID
-          playerVars: {
-            'playsinline': 1, // Standard setting for mobile compatibility
-            'rel': 0          // Suggest related videos from the same channel
-          },
-          events: {
-            'onReady': onPlayerReady
-          }
-        });
-      }
+        // 2. This function creates an <iframe> (and YouTube player) after the API code downloads.
+        var player;
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('player', {
+                height: '100%',
+                width: '100%',
+                videoId: 'wE8s993ZV-8', // Your specific video ID
+                playerVars: {
+                    'controls': 0,           // 0 = Hides the bottom play/pause/timeline controls
+                    'modestbranding': 1,     // 1 = Removes the YouTube logo from the control bar
+                    'rel': 0,                // 0 = Limits end-screen suggested videos to the same channel
+                    'fs': 0,                 // 0 = Hides the fullscreen button
+                    'disablekb': 1,          // 1 = Disables keyboard controls (spacebar to pause, etc.)
+                    'iv_load_policy': 3,     // 3 = Hides video annotations
+                    'playsinline': 1         // 1 = Prevents iOS from forcing the video fullscreen
+                },
+                events: {
+                    'onReady': onPlayerReady
+                }
+            });
+        }
 
-      // 4. The API calls this function when the player is fully ready
-      function onPlayerReady(event) {
-        // The player is ready. 
-        // If you want it to autoplay instantly, uncomment the line below:
-        // event.target.playVideo();
-      }
+        // 3. The API will call this function when the video player is ready.
+        function onPlayerReady(event) {
+            // Because controls are disabled, you must rely on the user clicking the video,
+            // or you can trigger play programmatically (though browsers block auto-play unmuted).
+            // event.target.playVideo();
+        }
     </script>
-  </body>
+</body>
 </html>
